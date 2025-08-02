@@ -79,7 +79,6 @@ void Render_RenderWindow(Render *render) {
     case RENDER_MODE_INIT:
       menu.isVisible = true;
       break;
-    // TODO: segfault at this point
     case RENDER_MODE_2D:
       if (render->isModeFirstFrame) {
         Arena mode2DArena =
@@ -89,7 +88,6 @@ void Render_RenderWindow(Render *render) {
         render->mode2DArena = &mode2DArena;
         render->frame2DArena = &frame2DArena;
 
-        // TODO: Segfault here
         Render2D render2d = Render2D_Init();
         render->render2d = &render2d;
       }

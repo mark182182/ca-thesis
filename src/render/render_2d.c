@@ -72,7 +72,6 @@ void Render2D_RenderMode(Render *render) {
       CURRENT_GENERATION % 2 == 0 ? render2d->secondC2d : render2d->firstC2d;
 
   // TODO: This should be drawn in a single call
-  // TODO: Segfault here
   for (int i = 0; i < CELL_COUNT; i++) {
     if (actualCd.cells[i].is_alive) {
       DrawRectangle(actualCd.positionsX[i], actualCd.positionsY[i],
