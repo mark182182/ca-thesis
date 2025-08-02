@@ -26,23 +26,27 @@ void Render2D_RenderMode(Render *render) {
     Cells2D_InitArraysBasedOnCellSize(render->mode2DArena,
                                       &render2d->secondC2d);
 
-    Evolve2D_InitializeCells(&render2d->firstC2d, true);
+    // TODO: Randomization should only be set, if the user clicks on the button
+    // or similar
+    Evolve2D_InitializeCells(&render2d->firstC2d, false);
     Evolve2D_InitializeCells(&render2d->secondC2d, false);
   }
 
   // would implement batched rendering, draw calls here
 
   // TODO: These should come from the 2D menu
+  if (IsKeyPressed(KEY_P)) {
+    render->isPaused = !render->isPaused;
+  }
   /*
     if (pressed == 'r') {
-      EvolveGOL2D_InitializeCells(&firstCd, true);
+      // TODO: here we should set the randomization based on the user
+    interaction EvolveGOL2D_InitializeCells(&firstCd, true);
       EvolveGOL2D_InitializeCells(&secondCd, false);
       currentGeneration = 0;
     }
 
-    if (pressed == 'p') {
-      isPaused = !isPaused;
-    }
+
 
     if (pressed == 'w') {
       render2DSpeed -= 0.001f;
@@ -93,6 +97,11 @@ void Render2D_RenderMode(Render *render) {
       DrawTextEx(render->menu->selectedFont, posText, GetMousePosition(),
                  FONT_SIZE, 0, TEXT_COLOR);
       color = YELLOW;
+
+      // TODO: Make sure the user can set the current cell's alive state
+      if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        actualCd.cells[i].is_alive = !actualCd.cells[i].is_alive;
+      }
     }
 
     if (actualCd.cells[i].is_alive) {
@@ -103,6 +112,16 @@ void Render2D_RenderMode(Render *render) {
                     CELL_HEIGHT_RATIO, CELL_WIDTH_RATIO, color);
     }
   }
+
+  // TODO: revise this, only an example
+  char *ruleText = "Current rule: Game of Life";
+  Vector2 textLength =
+      MeasureTextEx(render->menu->selectedFont, ruleText, FONT_SIZE, 0);
+
+  Vector2 position = {.x = SCREEN_WIDTH - textLength.x,
+                      .y = SCREEN_HEIGHT - textLength.y};
+  DrawTextEx(render->menu->selectedFont, ruleText, position, FONT_SIZE, 0,
+             TEXT_COLOR);
 
   EndMode2D();
 
