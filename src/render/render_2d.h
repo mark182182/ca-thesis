@@ -1,7 +1,12 @@
 #ifndef RENDER_2D
 #define RENDER_2D
 
-#include "render.h"
+#include "cellular/cells.h"
+
+// forward declaration of Render, since Render is using Render2D and Render2D is using Render
+// this is only possible, because a pointer is used
+struct Render;
+typedef struct Render Render;
 
 typedef struct Render2D {
   // TODO: include the relevant fields
@@ -11,6 +16,6 @@ typedef struct Render2D {
 } Render2D;
 
 Render2D Render2D_Init();
-void Render2D_RenderMode(Render2D *render2d, Render *render);
+void Render2D_RenderMode(Render *render);
 
 #endif

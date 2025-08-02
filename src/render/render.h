@@ -5,6 +5,9 @@
 #include "dstructs/arena.h"
 #include "cellular/cells.h"
 
+struct Render2D;
+typedef struct Render2D Render2D;
+
 /**
  * The main render window that contains the render loop, where the the main
  * menu gets drawn. Also used for selecting the other render modes via the menu.
@@ -17,6 +20,9 @@ typedef struct Render {
 
   Menu *menu;
 
+  Render2D *render2d;
+  // Render3D *render3d;
+
   // NOTE: might be worth replacing this to a ring buffer
   int charPressed;
   float deltaTime;
@@ -25,6 +31,7 @@ typedef struct Render {
   bool isWireframeMode;
   bool isPaused;
   bool isDebugOn;
+  bool isModeFirstFrame;
 } Render;
 
 void Render_RenderWindow(Render *render);

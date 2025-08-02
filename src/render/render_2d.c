@@ -1,16 +1,11 @@
 #include "render_2d.h"
 #include "render.h"
-#include "font.h"
 #include "cellular/gen_gol2d.h"
-
 #include <assert.h>
 #include <raylib.h>
-#include <GLFW/glfw3.h>
-#include <stdlib.h>
-#include "const.h"
 #include "cellular/cells.h"
-#include "menu.h"
 #include <time.h>
+#include <stdio.h>
 
 Render2D Render2D_Init() {
   Render2D render2d = {
@@ -18,17 +13,17 @@ Render2D Render2D_Init() {
   return render2d;
 }
 
-void Render2D_RenderMode(Render2D *render2d, Render *render) {
+void Render2D_RenderMode(Render *render) {
   // initialize everything once
-  if (CURRENT_GENERATION == 0) {
-    Cells2D firstC2d = render2d->firstC2d;
-    Cells2D secondC2d = render2d->secondC2d;
+  Render2D *render2d = render->render2d;
 
-    Cells2D_InitArraysBasedOnCellSize(render->mode2DArena, &firstC2d);
-    Cells2D_InitArraysBasedOnCellSize(render->mode2DArena, &secondC2d);
+  if (render->isModeFirstFrame) {
+    Cells2D_InitArraysBasedOnCellSize(render->mode2DArena, &render2d->firstC2d);
+    Cells2D_InitArraysBasedOnCellSize(render->mode2DArena,
+                                      &render2d->secondC2d);
 
-    GeneratorGOL2D_InitializeCells(&firstC2d, true);
-    GeneratorGOL2D_InitializeCells(&secondC2d, false);
+    GeneratorGOL2D_InitializeCells(&render2d->firstC2d, true);
+    GeneratorGOL2D_InitializeCells(&render2d->secondC2d, false);
   }
 
   // would implement batched rendering, draw calls here, if needed
@@ -77,6 +72,7 @@ void Render2D_RenderMode(Render2D *render2d, Render *render) {
       CURRENT_GENERATION % 2 == 0 ? render2d->secondC2d : render2d->firstC2d;
 
   // TODO: This should be drawn in a single call
+  // TODO: Segfault here
   for (int i = 0; i < CELL_COUNT; i++) {
     if (actualCd.cells[i].is_alive) {
       DrawRectangle(actualCd.positionsX[i], actualCd.positionsY[i],

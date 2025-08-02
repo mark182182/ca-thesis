@@ -14,6 +14,8 @@ int main() {
       .frame3DArena = NULL,
 
       .menu = NULL,
+      .render2d = NULL,
+      //.render3d = NULL
 
       .charPressed = 0,
       .deltaTime = 0,

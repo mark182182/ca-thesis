@@ -30,6 +30,10 @@ Arena Arena_Init(char *name, uint8_t *memory, size_t capacity) {
 }
 
 inline void *Arena_AllocAligned(Arena *arena, size_t size, size_t alignment) {
+  // TODO: debug allocations, if DEBUG_MODE is enabled
+  // printf_s("\nCurrent size to allocate: %zu\n", size);
+  // printf_s("\nCurrent used: %zu\n", arena->used);
+
   uintptr_t currentAddr = (uintptr_t)(arena->memory + arena->used);
 
   // need to align the current address by zeroing out the least significant bits

@@ -18,7 +18,12 @@ Menu Menu_Init() {
   return menu;
 }
 
-void Menu_Update(Menu *menu) { menu->cursorPosition = GetMousePosition(); }
+void Menu_Update(Menu *menu) {
+  menu->cursorPosition = GetMousePosition();
+  if (IsKeyPressed(KEY_F1)) {
+    menu->isVisible = !menu->isVisible;
+  }
+}
 
 void Menu_Draw(Menu *menu) {
   uint8_t optionCount = 3;

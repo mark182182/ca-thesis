@@ -13,19 +13,13 @@
 static const size_t PERMANENT_STORAGE_SIZE = 24 * 1024 * 1024;
 /**
  * Need storage for all of Cells2D's fields, for which the formula is currently:
- * CELL_COUNT * numberOfFields * numberOfArenas
  *
+ * Example, if CELL_COUNT is 14.400, the estimate would be:
  *
- * Example, if CELL_COUNT is 11.520:
- *
- * CELL_COUNT * (cells * positionX * positionY * colors) * (firstGenArena +
- * secondGenArena) = 11.520 * (4*4*4*4) * 2 = 737.280 or 720 KB (this is not
- * correct, see below)
- *
- * For some reason the actual used memory for one Cells2D will be: 195.840 (so
- * 196.608, 192KB), which would be 393.216 (384 KB)
+ * for each field(CELL_COUNT * sizeof(field)) * 2 =
+ * (14.400 + 57.600 + 57.600 + 115.200) * 2 = 244.800 + padding, so ~478 KB
  */
-static const size_t MODE_2D_STORAGE_SIZE = 720 * 1024;
+static const size_t MODE_2D_STORAGE_SIZE = 512 * 1024;
 // NOTE: initial estimate without measurement for the lifetime for the 2D and 3D
 // modes, increase as needed
 static const size_t MODE_3D_STORAGE_SIZE = 16 * 1024 * 1024;
@@ -76,7 +70,6 @@ typedef struct Arena {
   uint8_t *memory; // the pointer to the backing memory storage,
   size_t capacity; // maximum possible memory to be allocated
   size_t used;     // the currently used memory
-  size_t size;     // the size of the arena respective to the objects in it
 } Arena;
 
 /**

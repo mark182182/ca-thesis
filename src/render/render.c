@@ -21,7 +21,6 @@ void Render_RenderWindow(Render *render) {
 
   SetTargetFPS(render->fpsCap);
 
-  bool isFirstFrame = true;
   while (!WindowShouldClose()) {
     render->charPressed = GetCharPressed();
     Menu_Update(render->menu);
@@ -44,27 +43,29 @@ void Render_RenderWindow(Render *render) {
 
     if (menu.currentMode != menu.prevMode) {
       // whenever we switch modes, we free everything
-      isFirstFrame = true;
+      render->isModeFirstFrame = true;
 
       if (render->mode2DArena != NULL) {
-        render->mode2DArena = NULL;
         Arena_FreeZeroed(render->mode2DArena);
+        render->mode2DArena = NULL;
       }
 
       if (render->frame2DArena != NULL) {
-        render->frame2DArena = NULL;
         Arena_FreeZeroed(render->frame2DArena);
+        render->frame2DArena = NULL;
       }
 
       if (render->mode3DArena != NULL) {
-        render->mode3DArena = NULL;
         Arena_FreeZeroed(render->mode3DArena);
+        render->mode3DArena = NULL;
       }
 
       if (render->frame3DArena != NULL) {
-        render->frame3DArena = NULL;
         Arena_FreeZeroed(render->frame3DArena);
+        render->frame3DArena = NULL;
       }
+
+      menu.prevMode = menu.currentMode;
     }
 
     // update variables here
@@ -76,9 +77,11 @@ void Render_RenderWindow(Render *render) {
     // TODO: implement the switching on modes in the main menu
     switch (menu.currentMode) {
     case RENDER_MODE_INIT:
+      menu.isVisible = true;
       break;
+    // TODO: segfault at this point
     case RENDER_MODE_2D:
-      if (isFirstFrame) {
+      if (render->isModeFirstFrame) {
         Arena mode2DArena =
             Arena_Init("modeArena", &mode2DArenaStorage, MODE_2D_STORAGE_SIZE);
         Arena frame2DArena = Arena_Init("frame2DArena", &frame2DArenaStorage,
@@ -86,14 +89,22 @@ void Render_RenderWindow(Render *render) {
         render->mode2DArena = &mode2DArena;
         render->frame2DArena = &frame2DArena;
 
+        // TODO: Segfault here
         Render2D render2d = Render2D_Init();
-        Render2D_RenderMode(&render2d, render);
+        render->render2d = &render2d;
+      }
+      // can always call this, since at the first frame render2d should be
+      // initialized
+      Render2D_RenderMode(render);
 
-        isFirstFrame = false;
+      // only set the isModeFirstFrame to false, after the Render2D was called
+      // once
+      if (render->isModeFirstFrame) {
+        render->isModeFirstFrame = false;
       }
       break;
     case RENDER_MODE_3D:
-      if (isFirstFrame) {
+      if (render->isModeFirstFrame) {
         Arena mode3DArena =
             Arena_Init("modeArena", &mode3DArenaStorage, MODE_3D_STORAGE_SIZE);
 
@@ -105,16 +116,20 @@ void Render_RenderWindow(Render *render) {
         // TODO: implement this
         /*
         Render3D render3D = Render3D_Init();
-        Render3D_RenderMode(render);
         */
-        isFirstFrame = false;
+      }
+      // Render3D_RenderMode(render);
+      if (render->isModeFirstFrame) {
+        render->isModeFirstFrame = false;
       }
       break;
     default:
       break;
     }
 
-    Menu_Draw(&menu);
+    if (menu.isVisible) {
+      Menu_Draw(&menu);
+    }
 
     if (IsKeyPressed(KEY_TAB)) {
       render->isDebugOn = !render->isDebugOn;
@@ -128,5 +143,4 @@ void Render_RenderWindow(Render *render) {
   }
 
   // teardown the objects after the window has been closed
-  Arena_Free(render->mode2DArena);
 }
