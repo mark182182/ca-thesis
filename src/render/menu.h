@@ -17,7 +17,6 @@ typedef enum RenderMode {
  */
 typedef struct Menu {
   Font selectedFont;
-  Vector2 cursorPosition;
 
   // TODO: A state machine to handle the mode changes would be better, but this
   // keeps it simple for now

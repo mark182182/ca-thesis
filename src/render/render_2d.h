@@ -3,13 +3,13 @@
 
 #include "cellular/cells.h"
 
-// forward declaration of Render, since Render is using Render2D and Render2D is using Render
-// this is only possible, because a pointer is used
+// forward declaration of Render, since Render is using Render2D and Render2D is
+// using Render this is only possible, because a pointer is used
 struct Render;
 typedef struct Render Render;
 
 typedef struct Render2D {
-  // TODO: include the relevant fields
+  // higher values mean slower updates
   float render2DSpeed;
   Cells2D firstC2d;
   Cells2D secondC2d;

@@ -5,6 +5,9 @@
 #include "dstructs/arena.h"
 #include "cellular/cells.h"
 
+// use this instead of WindowShouldClose(), as it checks the escape key as well
+extern bool shouldClose;
+
 struct Render2D;
 typedef struct Render2D Render2D;
 
@@ -20,6 +23,7 @@ typedef struct Render {
 
   Menu *menu;
 
+  Camera2D camera2d;
   Render2D *render2d;
   // Render3D *render3d;
 

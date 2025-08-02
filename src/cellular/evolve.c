@@ -1,15 +1,11 @@
-#include "gen_gol2d.h"
+#include "evolve.h"
 #include "const.h"
 #include "cells.h"
-#include <raylib.h>
 #include <stdlib.h>
-#include <GLFW/glfw3.h>
-#include <stdio.h>
-#include <immintrin.h>
 
-int CURRENT_GENERATION = 0;
+int rule1DBits = 0x00000000;
 
-void GeneratorGOL2D_InitializeCells(Cells2D *c2d, bool randomizeAlive) {
+void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive) {
   int i = 0;
   for (int posX = 0; posX < SCREEN_WIDTH; posX += CELL_WIDTH_RATIO) {
     for (int posY = 0; posY < SCREEN_HEIGHT; posY += CELL_HEIGHT_RATIO) {
@@ -32,9 +28,9 @@ const uint8_t OVERPOPULATION_UPPER_CAP = 3;
 
 // TODO: use a compute shader instead (since OpenGL 4.3)
 // possibly binding the 2 SSBOs and call glDispatchCompute and glMemoryBarrier
-void GeneratorGOL2D_NextGeneration(Cells2D *outC2d, Cells2D *inC2d) {
+void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d) {
   for (int i = 0; i < CELL_COUNT; i++) {
-    int neighbours = __CheckNeighbours(inC2d, i);
+    int neighbours = __GOL2DCheckNeighbours(inC2d, i);
     // under or overpopulation
     if (neighbours < UNDERPOPULATION_UPPER_CAP ||
         neighbours > OVERPOPULATION_UPPER_CAP) {
@@ -45,7 +41,6 @@ void GeneratorGOL2D_NextGeneration(Cells2D *outC2d, Cells2D *inC2d) {
       outC2d->cells[i].is_alive = true;
     }
   }
-  CURRENT_GENERATION++;
 }
 
 /**
@@ -55,12 +50,12 @@ void GeneratorGOL2D_NextGeneration(Cells2D *outC2d, Cells2D *inC2d) {
  *
  * @return int: the number of neighbours
  */
-int __CheckNeighbours(Cells2D *inC2d, int i) {
+int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
   int neighbours = 0;
   int arraySize = (CELL_COUNT - 1);
 
   for (int j = 0; j < CELL_NEIGHBOUR_SIZE; j++) {
-    int relativeIdx = i + DIAGONAL_INDEXES[j];
+    int relativeIdx = i + DIAGONAL_INDEXES_2D[j];
     if (relativeIdx >= 0 && relativeIdx <= arraySize &&
         inC2d->cells[relativeIdx].is_alive) {
       // the relative diagonal cell
@@ -69,7 +64,7 @@ int __CheckNeighbours(Cells2D *inC2d, int i) {
   }
 
   for (int j = 0; j < CELL_NEIGHBOUR_SIZE; j++) {
-    int relativeIdx = i + ADJECENT_INDEXES[j];
+    int relativeIdx = i + ADJECENT_INDEXES_2D[j];
     if (relativeIdx >= 0 && relativeIdx <= arraySize &&
         inC2d->cells[relativeIdx].is_alive) {
       // the adjecent diagonal cell

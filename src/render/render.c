@@ -3,6 +3,7 @@
 #include "dstructs/arena.h"
 #include <assert.h>
 #include <raylib.h>
+#include <rlgl.h>
 #include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include "const.h"
@@ -11,6 +12,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "render_2d.h"
+
+bool shouldClose = false;
 
 void Render_RenderWindow(Render *render) {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "CA Renderer");
@@ -21,7 +24,11 @@ void Render_RenderWindow(Render *render) {
 
   SetTargetFPS(render->fpsCap);
 
-  while (!WindowShouldClose()) {
+  Camera2D camera = {0};
+  camera.zoom = 1.0f;
+  render->camera2d = camera;
+
+  while (!shouldClose) {
     render->charPressed = GetCharPressed();
     Menu_Update(render->menu);
 
@@ -68,10 +75,9 @@ void Render_RenderWindow(Render *render) {
       menu.prevMode = menu.currentMode;
     }
 
-    // update variables here
-    ClearBackground(DARKBLUE);
-
     BeginDrawing();
+
+    ClearBackground(DARKBLUE);
 
     // select the current mode
     // TODO: implement the switching on modes in the main menu

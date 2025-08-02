@@ -86,7 +86,9 @@
     "optional": "c",
     "sstream": "c",
     "streambuf": "c",
-    "*.def": "c"
+    "*.def": "c",
+    "raymath.h": "c",
+    "rlgl.h": "c"
   },
   // Disable GitHub Copilot for C files
   "github.copilot.enable": {

@@ -10,13 +10,13 @@ enum {
   CELL_HEIGHT_SIZE = SCREEN_HEIGHT / CELL_HEIGHT_RATIO,
   CELL_WIDTH_SIZE = SCREEN_WIDTH / CELL_WIDTH_RATIO,
   CELL_COUNT = CELL_HEIGHT_SIZE * CELL_WIDTH_SIZE,
-  CELL_INITIAL_GRID_DENSITY = 5, // number of cells cells are alive at start,
-                                 // when the grid is randomized
+  CELL_INITIAL_GRID_DENSITY = 4, // number of cells cells are alive at start,
+                                 // when the grid is randomized, lower is higher
   CELL_NEIGHBOUR_SIZE = 4        // Moore neighbourhood
 };
 
-extern const int DIAGONAL_INDEXES[];
-extern const int ADJECENT_INDEXES[];
+extern const int DIAGONAL_INDEXES_2D[];
+extern const int ADJECENT_INDEXES_2D[];
 
 typedef struct Cell {
   bool is_alive; // populated or unpopulated

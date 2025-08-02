@@ -7,20 +7,18 @@
 #include "common.h"
 #include <string.h>
 #include <stdbool.h>
+#include "render.h"
 
 Menu Menu_Init() {
   LoadFonts();
   Font font = fonts_by_type[FONT_TYPE_FIRA_CODE_RETINA];
-  Menu menu = {.selectedFont = font,
-               .cursorPosition = {.x = 0, .y = 0},
-               .currentMode = RENDER_MODE_INIT,
-               .isVisible = true};
+  Menu menu = {
+      .selectedFont = font, .currentMode = RENDER_MODE_INIT, .isVisible = true};
   return menu;
 }
 
 void Menu_Update(Menu *menu) {
-  menu->cursorPosition = GetMousePosition();
-  if (IsKeyPressed(KEY_F1)) {
+  if (IsKeyPressed(KEY_ESCAPE)) {
     menu->isVisible = !menu->isVisible;
   }
 }
@@ -77,7 +75,7 @@ void Menu_DrawText(Menu *menu, Vector2 firstTextPos, Vector2 *currentTextPos,
                         .width = textLength.x,
                         .height = textLength.y};
 
-  if (CheckCollisionPointRec(menu->cursorPosition, textRect)) {
+  if (CheckCollisionPointRec(GetMousePosition(), textRect)) {
     currentRectColor = DARKGRAY;
     if (onCollisionFn != NULL) {
       onCollisionFn(menu);

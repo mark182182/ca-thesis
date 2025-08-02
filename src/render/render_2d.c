@@ -1,15 +1,19 @@
 #include "render_2d.h"
 #include "render.h"
-#include "cellular/gen_gol2d.h"
+#include "cellular/evolve.h"
 #include <assert.h>
 #include <raylib.h>
 #include "cellular/cells.h"
+#include "dstructs/arena.h"
 #include <time.h>
+#include "rlgl.h"
 #include <stdio.h>
+
+int currentGeneration = 0;
 
 Render2D Render2D_Init() {
   Render2D render2d = {
-      .render2DSpeed = 0.2f, .firstC2d = {0}, .secondC2d = {0}};
+      .render2DSpeed = 0.4f, .firstC2d = {0}, .secondC2d = {0}};
   return render2d;
 }
 
@@ -22,18 +26,18 @@ void Render2D_RenderMode(Render *render) {
     Cells2D_InitArraysBasedOnCellSize(render->mode2DArena,
                                       &render2d->secondC2d);
 
-    GeneratorGOL2D_InitializeCells(&render2d->firstC2d, true);
-    GeneratorGOL2D_InitializeCells(&render2d->secondC2d, false);
+    Evolve2D_InitializeCells(&render2d->firstC2d, true);
+    Evolve2D_InitializeCells(&render2d->secondC2d, false);
   }
 
-  // would implement batched rendering, draw calls here, if needed
+  // would implement batched rendering, draw calls here
 
   // TODO: These should come from the 2D menu
   /*
     if (pressed == 'r') {
-      GeneratorGOL2D_InitializeCells(&firstCd, true);
-      GeneratorGOL2D_InitializeCells(&secondCd, false);
-      CURRENT_GENERATION = 0;
+      EvolveGOL2D_InitializeCells(&firstCd, true);
+      EvolveGOL2D_InitializeCells(&secondCd, false);
+      currentGeneration = 0;
     }
 
     if (pressed == 'p') {
@@ -51,33 +55,56 @@ void Render2D_RenderMode(Render *render) {
 
   if (render->isPaused == 0 && render->deltaTime >= render2d->render2DSpeed) {
     clock_t time = clock();
-    if (CURRENT_GENERATION != 0) {
+    if (currentGeneration != 0) {
       // TODO: The display is weird, somehow the display of the cells doesn't
       // match up with the state
-      if (CURRENT_GENERATION % 2 == 0) {
-        GeneratorGOL2D_NextGeneration(&render2d->firstC2d,
-                                      &render2d->secondC2d);
+      if (currentGeneration % 2 == 0) {
+        EvolveGOL2D_NextGeneration(&render2d->firstC2d, &render2d->secondC2d);
       } else {
-        GeneratorGOL2D_NextGeneration(&render2d->secondC2d,
-                                      &render2d->firstC2d);
+        EvolveGOL2D_NextGeneration(&render2d->secondC2d, &render2d->firstC2d);
       }
-    } else {
-      CURRENT_GENERATION++;
     }
+    currentGeneration++;
     render->deltaTime = 0;
   }
   render->deltaTime += GetFrameTime();
 
   Cells2D actualCd =
-      CURRENT_GENERATION % 2 == 0 ? render2d->secondC2d : render2d->firstC2d;
+      currentGeneration % 2 == 0 ? render2d->secondC2d : render2d->firstC2d;
+
+  // update variables here
+
+  BeginMode2D(render->camera2d);
 
   // TODO: This should be drawn in a single call
   for (int i = 0; i < CELL_COUNT; i++) {
+    Color color = *actualCd.colors[i];
+    // TODO: Revise this, just an example
+    Rectangle rect = {.height = CELL_HEIGHT_RATIO,
+                      .width = CELL_WIDTH_RATIO,
+                      .x = actualCd.positionsX[i],
+                      .y = actualCd.positionsY[i]};
+    if (CheckCollisionPointRec(GetMousePosition(), rect)) {
+      Vector2 position = {.x = 100, .y = 200};
+      char posText[32];
+      snprintf(posText, sizeof(posText), "Pos: %f, cellX: %f",
+               GetMousePosition().x, rect.x);
+
+      DrawTextEx(render->menu->selectedFont, posText, GetMousePosition(),
+                 FONT_SIZE, 0, TEXT_COLOR);
+      color = YELLOW;
+    }
+
     if (actualCd.cells[i].is_alive) {
       DrawRectangle(actualCd.positionsX[i], actualCd.positionsY[i],
-                    CELL_HEIGHT_RATIO, CELL_WIDTH_RATIO, *actualCd.colors[i]);
+                    CELL_HEIGHT_RATIO, CELL_WIDTH_RATIO, color);
+    } else if (color.a == YELLOW.a && color.b == YELLOW.b) {
+      DrawRectangle(actualCd.positionsX[i], actualCd.positionsY[i],
+                    CELL_HEIGHT_RATIO, CELL_WIDTH_RATIO, color);
     }
   }
+
+  EndMode2D();
 
   // free objects after each frame
   Arena_Free(render->frame2DArena);
