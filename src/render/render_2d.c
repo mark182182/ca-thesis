@@ -31,10 +31,6 @@ void Render2D_RenderMode(Render2D *render2d, Render *render) {
     GeneratorGOL2D_InitializeCells(&secondC2d, false);
   }
 
-
-
-  Menu_Update(&render->menu);
-
   // would implement batched rendering, draw calls here, if needed
 
   // TODO: These should come from the 2D menu

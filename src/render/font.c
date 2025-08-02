@@ -1,6 +1,7 @@
 #include "font.h"
 #include <raylib.h>
 #include <stdio.h>
+#include "const.h"
 #include <assert.h>
 
 Font fonts_by_type[MAX_FONT_TYPE] = {0};
@@ -8,8 +9,8 @@ Font fonts_by_type[MAX_FONT_TYPE] = {0};
 void LoadFonts() {
 
   // FiraCode-Retina.ttf
-  Font font =
-      LoadFontEx("resources/fonts/firacode/FiraCode-Retina.ttf", 32, 0, 250);
+  Font font = LoadFontEx("resources/fonts/firacode/FiraCode-Retina.ttf",
+                         FONT_SIZE, 0, 250);
 
   assert(font.baseSize != 0);
 

@@ -24,6 +24,7 @@ void Render_RenderWindow(Render *render) {
   bool isFirstFrame = true;
   while (!WindowShouldClose()) {
     render->charPressed = GetCharPressed();
+    Menu_Update(render->menu);
 
     if (render->fpsCap == 60 && render->charPressed == 'c') {
       render->fpsCap = 0;

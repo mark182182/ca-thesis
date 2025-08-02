@@ -30,8 +30,12 @@ void Menu_Update(Menu *menu);
 void Menu_Draw(Menu *menu);
 void Menu_DrawDebug(Menu *menu);
 
-void __DrawTextInMenu(Menu *menu, Vector2 firstTextPos, Vector2 *currentTextPos,
-                      const char *textToDraw, int fontSize, Color rectColor,
-                      Color textColor, void (*onCollisionFn)(void));
+void Menu_DrawTextDefault(Menu *menu, Vector2 firstTextPos,
+                          Vector2 *currentTextPos, const char *textToDraw,
+                          void (*onCollisionFn)(Menu *menu));
+
+void Menu_DrawText(Menu *menu, Vector2 firstTextPos, Vector2 *currentTextPos,
+                   const char *textToDraw, int fontSize, Color rectColor,
+                   Color textColor, void (*onCollisionFn)(Menu *menu));
 
 #endif
