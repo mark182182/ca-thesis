@@ -19,7 +19,8 @@ typedef struct Menu {
   Font selectedFont;
   Vector2 cursorPosition;
 
-  // TODO: A state machine to handle the mode changes would be better, but this keeps it simple for now
+  // TODO: A state machine to handle the mode changes would be better, but this
+  // keeps it simple for now
   RenderMode prevMode;
   RenderMode currentMode;
 } Menu;
@@ -27,6 +28,7 @@ typedef struct Menu {
 Menu Menu_Init();
 void Menu_Update(Menu *menu);
 void Menu_Draw(Menu *menu);
+void Menu_DrawDebug(Menu *menu);
 
 void __DrawTextInMenu(Menu *menu, Vector2 firstTextPos, Vector2 *currentTextPos,
                       const char *textToDraw, int fontSize, Color rectColor,

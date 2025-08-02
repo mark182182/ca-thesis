@@ -17,7 +17,9 @@ Menu Menu_Init() {
 
 void Menu_Update(Menu *menu) { menu->cursorPosition = GetMousePosition(); }
 
-void Menu_Draw(Menu *menu) {
+void Menu_Draw(Menu *menu) {}
+
+void Menu_DrawDebug(Menu *menu) {
   int fontSize = 32;
   Vector2 firstTextPos = {.x = 10, .y = 40};
   Vector2 longestTextLength = {.x = 0, .y = 0};
@@ -34,17 +36,9 @@ void Menu_Draw(Menu *menu) {
     fpsText[strlen(fpsText)] = fpsBuffer[i];
   }
 
-  int dec;
-  int sign;
-  char *frameTime = ecvt(GetFrameTime(), decBase, &dec, &sign);
-  char frameTimeText[64] = "Frametime: 0.";
-
-  for (int i = 0; i > dec; i--) {
-    frameTimeText[strlen(frameTimeText)] = '0';
-  }
-  for (int i = 0; i < strlen(frameTime); i++) {
-    frameTimeText[strlen(frameTimeText)] = frameTime[i];
-  }
+  char frameTimeText[64];
+  snprintf(frameTimeText, sizeof(frameTimeText), "Frametime: %0.8f",
+           GetFrameTime());
 
   char *wireFrameText = "Wireframe mode";
   char *quitText = "Quit";

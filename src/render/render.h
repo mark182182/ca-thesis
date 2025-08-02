@@ -17,13 +17,14 @@ typedef struct Render {
 
   Menu *menu;
 
-  bool isWireframeMode;
   // NOTE: might be worth replacing this to a ring buffer
-  int keyPressed;
-  bool isPaused;
+  int charPressed;
   float deltaTime;
   int fpsCap;
 
+  bool isWireframeMode;
+  bool isPaused;
+  bool isDebugOn;
 } Render;
 
 void Render_RenderWindow(Render *render);

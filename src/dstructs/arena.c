@@ -64,10 +64,17 @@ inline void *Arena_AllocAlignedZeroed(Arena *arena, size_t size,
 Rolls back the pointer to the original position, so the pre-allocated backing
 byte storage can be reused.
 */
-inline void Arena_Free(Arena *arena) { arena->used = 0; }
+inline void Arena_Free(Arena *arena) {
+  if (arena != NULL) {
+    arena->used = 0;
+  }
+}
+
 inline void Arena_FreeZeroed(Arena *arena) {
-  arena->used = 0;
-  if (arena->memory != NULL) {
-    memset(arena->memory, 0, arena->capacity);
+  if (arena != NULL) {
+    arena->used = 0;
+    if (arena->memory != NULL) {
+      memset(arena->memory, 0, arena->capacity);
+    }
   }
 }
