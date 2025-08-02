@@ -6,29 +6,19 @@
 #include <stdlib.h>
 #include "common.h"
 #include <string.h>
+#include <stdbool.h>
 
 Menu Menu_Init() {
   LoadFonts();
   Font font = fonts_by_type[FONT_TYPE_FIRA_CODE_RETINA];
   Menu menu = {.selectedFont = font,
                .cursorPosition = {.x = 0, .y = 0},
-               .currentMode = RENDER_MODE_INIT};
+               .currentMode = RENDER_MODE_INIT,
+               .isVisible = true};
   return menu;
 }
 
 void Menu_Update(Menu *menu) { menu->cursorPosition = GetMousePosition(); }
-
-static void __Init_2D_Mode(Menu *menu) {
-  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-    menu->currentMode = RENDER_MODE_2D;
-  }
-}
-
-static void __Close_Window(Menu *menu) {
-  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-    exit(0);
-  }
-}
 
 void Menu_Draw(Menu *menu) {
   uint8_t optionCount = 3;
@@ -58,16 +48,9 @@ void Menu_DrawDebug(Menu *menu) {
   snprintf(frameTimeText, sizeof(frameTimeText), "Frametime: %0.8f",
            GetFrameTime());
 
-  char *wireFrameText = "Wireframe mode";
-  char *quitText = "Quit";
-
-  Menu_DrawTextDefault(menu, firstTextPos, &currentTextPos, fpsText, noOp);
+  Menu_DrawTextDefault(menu, firstTextPos, &currentTextPos, fpsText, NULL);
   Menu_DrawTextDefault(menu, firstTextPos, &currentTextPos, frameTimeText,
-                       noOp);
-
-  Menu_DrawTextDefault(menu, firstTextPos, &currentTextPos, wireFrameText,
-                       noOp);
-  Menu_DrawTextDefault(menu, firstTextPos, &currentTextPos, quitText, noOp);
+                       NULL);
 }
 
 void Menu_DrawTextDefault(Menu *menu, Vector2 firstTextPos,
@@ -91,7 +74,9 @@ void Menu_DrawText(Menu *menu, Vector2 firstTextPos, Vector2 *currentTextPos,
 
   if (CheckCollisionPointRec(menu->cursorPosition, textRect)) {
     currentRectColor = DARKGRAY;
-    onCollisionFn(menu);
+    if (onCollisionFn != NULL) {
+      onCollisionFn(menu);
+    }
   }
 
   DrawRectangleRec(textRect, currentRectColor);
@@ -100,4 +85,21 @@ void Menu_DrawText(Menu *menu, Vector2 firstTextPos, Vector2 *currentTextPos,
 
   currentTextPos->x += textLength.x;
   currentTextPos->y += textLength.y;
+}
+
+static void __Init_2D_Mode(Menu *menu) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    menu->currentMode = RENDER_MODE_2D;
+    menu->isVisible = false;
+  }
+}
+
+static void __Init_3D_mode(Menu *menu) {
+  // TODO
+}
+
+static void __Close_Window(Menu *menu) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    exit(0);
+  }
 }

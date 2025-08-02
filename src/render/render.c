@@ -44,6 +44,8 @@ void Render_RenderWindow(Render *render) {
 
     if (menu.currentMode != menu.prevMode) {
       // whenever we switch modes, we free everything
+      isFirstFrame = true;
+
       if (render->mode2DArena != NULL) {
         render->mode2DArena = NULL;
         Arena_FreeZeroed(render->mode2DArena);
@@ -86,6 +88,8 @@ void Render_RenderWindow(Render *render) {
 
         Render2D render2d = Render2D_Init();
         Render2D_RenderMode(&render2d, render);
+
+        isFirstFrame = false;
       }
       break;
     case RENDER_MODE_3D:
@@ -103,14 +107,11 @@ void Render_RenderWindow(Render *render) {
         Render3D render3D = Render3D_Init();
         Render3D_RenderMode(render);
         */
+        isFirstFrame = false;
       }
       break;
     default:
       break;
-    }
-
-    if (isFirstFrame) {
-      isFirstFrame = false;
     }
 
     Menu_Draw(&menu);

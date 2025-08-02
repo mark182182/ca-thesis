@@ -1,6 +1,5 @@
 #include "font.h"
 #include <raylib.h>
-#include <stdio.h>
 #include "const.h"
 #include <assert.h>
 

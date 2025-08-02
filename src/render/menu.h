@@ -23,6 +23,8 @@ typedef struct Menu {
   // keeps it simple for now
   RenderMode prevMode;
   RenderMode currentMode;
+
+  bool isVisible;
 } Menu;
 
 Menu Menu_Init();
@@ -37,5 +39,9 @@ void Menu_DrawTextDefault(Menu *menu, Vector2 firstTextPos,
 void Menu_DrawText(Menu *menu, Vector2 firstTextPos, Vector2 *currentTextPos,
                    const char *textToDraw, int fontSize, Color rectColor,
                    Color textColor, void (*onCollisionFn)(Menu *menu));
+
+static void __Init_2D_Mode(Menu *menu);
+static void __Init_3D_mode(Menu *menu);
+static void __Close_Window(Menu *menu);
 
 #endif
