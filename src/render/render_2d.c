@@ -6,7 +6,6 @@
 #include "cellular/cells.h"
 #include "dstructs/arena.h"
 #include <time.h>
-#include "rlgl.h"
 #include <stdio.h>
 
 int currentGeneration = 0;
@@ -124,6 +123,19 @@ void Render2D_RenderMode(Render *render) {
              TEXT_COLOR);
 
   EndMode2D();
+
+  // TODO: The menu should be rendered on the right hand side of the screen
+  // The menu should contain the following options:
+  // - Display the current generation
+  // - Pause the rendering
+  // - Revert the rendering to the 0th generation
+  // - Generate random cells based on the density
+  // NOTE: After 3D is done and have the time: multiple rules
+  // - Select built-in rules to use
+  // - The user can write their custom rules (maybe Lua?)
+  // if (menu2d.isVisible) {
+  //   Menu2D_Draw(&menu);
+  // }
 
   // free objects after each frame
   Arena_Free(render->frame2DArena);

@@ -60,6 +60,12 @@ if [[ "$*" != *"--no-tidy"* ]]; then
     clang-tidy -p build ./src/**/*.c -checks=-*,clang-analyzer-*,concurrency-*,modernize-*,performance-*,readability-*
 fi
 
+compat_mode=""
+if [[ "$*" == *"--compat"* ]]; then
+    echo "Compatibility mode enabled."
+    compat_mode="ON"
+fi
+
 export CC=clang
 cmake -S . -B build \
     -G "MinGW Makefiles" \
@@ -68,6 +74,7 @@ cmake -S . -B build \
     -DCMAKE_MAKE_PROGRAM="make" \
     -DCLANG_VERBOSE="$verbose_mode" \
     -DCLANG_DUMP_AST="$dump_mode" \
+    -DCOMPAT_MODE="$compat_mode" \
     -DCOMMON_FLAGS="$COMMON_FLAGS"
 
 # build the project

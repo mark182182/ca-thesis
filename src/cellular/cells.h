@@ -18,6 +18,7 @@ enum {
 extern const int DIAGONAL_INDEXES_2D[];
 extern const int ADJECENT_INDEXES_2D[];
 
+// NOTE: Having a bool in a single struct is totally unnecessary
 typedef struct Cell {
   bool is_alive; // populated or unpopulated
 } Cell;
@@ -46,5 +47,9 @@ typedef struct Cells2D {
 } Cells2D;
 
 void Cells2D_InitArraysBasedOnCellSize(Arena *genArena, Cells2D *c2d);
+
+typedef struct Cells3D {
+  // TODO: Before trying to re-creating the same logic what the render 2d is doing with Cells2D, take a look at what instanced 3d rendering requires
+} Cells2D;
 
 #endif

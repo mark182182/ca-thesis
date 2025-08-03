@@ -21,13 +21,27 @@ set(CMAKE_C_FLAGS_DEBUG "-O0 -g -gcodeview -gdwarf-4 -Wno-declaration-after-stat
 # Release build should optimize and not include debug symbols, disable asserts
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
 
+
+if (COMPAT_MODE)
+    # in case the CPU doesn't support AVX2, use AVX1
+    # For Intel HD Graphics 4000 (minimum support level), drop it down to OpenGL 3.3, if the compatibility flag is set
+    # For other GPUs, use OpenGL 4.3
+    set(EXECUTABLE_NAME "ca_renderer_compat")
+    set(CMAKE_C_ADDITIONAL_FLAGS "-march=core-avx-i")
+    set(GRAPHICS_LEVEL "GRAPHICS_API_OPENGL_33" CACHE STRING "Graphics API Level" FORCE)
+else()
+    set(EXECUTABLE_NAME "ca_renderer")
+    set(CMAKE_C_ADDITIONAL_FLAGS "-mavx2")
+    set(GRAPHICS_LEVEL "GRAPHICS_API_OPENGL_43" CACHE STRING "Graphics API Level" FORCE)
+endif()
+
 # Set compiler flags for the project
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Weverything -Wno-missing-prototypes -Wno-strict-prototypes -mavx2")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Weverything -Wno-missing-prototypes -Wno-strict-prototypes ${CMAKE_C_ADDITIONAL_FLAGS}")
 
 # Conditionally dump AST if requested
 if (CLANG_DUMP_AST)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xclang -ast-dump -Xclang -ast-dump-filter=ca_renderer -o ${CMAKE_BINARY_DIR}/ca_renderer.ast")
-    message(STATUS "AST dump will be generated at ${CMAKE_BINARY_DIR}/ca_renderer.ast")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xclang -ast-dump -Xclang -ast-dump-filter=${EXECUTABLE_NAME} -o ${CMAKE_BINARY_DIR}/${EXECUTABLE_NAME}.ast")
+    message(STATUS "AST dump will be generated at ${CMAKE_BINARY_DIR}/${EXECUTABLE_NAME}.ast")
 else()
 endif()
 
@@ -58,7 +72,7 @@ else()
     add_link_options(-fuse-ld=lld)
 endif()
 
-project(ca_renderer LANGUAGES C)
+project(${EXECUTABLE_NAME} LANGUAGES C)
 
 # Add any test directories
 
@@ -70,9 +84,11 @@ add_subdirectory(tests/benchmark)
 add_subdirectory(tests/e2e)
 
 # Add source to this project's executable.
+
 file(GLOB_RECURSE CA_RENDERER_SRC CONFIGURE_DEPENDS "src/*.c")
-add_executable(ca_renderer "${CMAKE_SOURCE_DIR}/resources" ${CA_RENDERER_SRC})
-target_include_directories(ca_renderer PRIVATE src external/raylib/src)
+add_executable(${EXECUTABLE_NAME} "${CMAKE_SOURCE_DIR}/resources" ${CA_RENDERER_SRC})
+target_include_directories(${EXECUTABLE_NAME} PRIVATE src external/raylib/src)
+
 
 # Raylib
 set(RAYLIB_VERSION 5.5)
@@ -111,7 +127,7 @@ if (NOT raylib_FOUND)
     FetchContent_GetProperties(raylib)
     if (NOT raylib_POPULATED)
         set(FETCHCONTENT_QUIET NO)
-        set(GRAPHICS GRAPHICS_API_OPENGL_43 CACHE STRING "" FORCE)
+        set(GRAPHICS ${GRAPHICS_LEVEL})
         FetchContent_MakeAvailable(raylib)
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     endif()
@@ -137,8 +153,8 @@ else()
 endif()
 
 # Copy resources directory to the output directory
-add_custom_command(TARGET ca_renderer POST_BUILD
+add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:ca_renderer>/resources)
+    ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/resources)
 
 # TODO: Add tests and install targets if needed.

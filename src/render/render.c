@@ -3,7 +3,6 @@
 #include "dstructs/arena.h"
 #include <assert.h>
 #include <raylib.h>
-#include <rlgl.h>
 #include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include "const.h"
