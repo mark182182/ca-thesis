@@ -5,9 +5,19 @@
 
 typedef struct Render3D {
   // higher values mean slower updates
+  Camera3D camera;
+  Mesh cube;
+  Material matInstances;
+  Shader shader;
+  Matrix *transforms;
+
+  // Cells3D firstC3d;
+  // Cells3D secondC3d;
   float render3DSpeed;
-  Cells3D firstC3d;
-  Cells3D secondC3d;
-} Render2D;
+
+} Render3D;
+
+Render3D Render3D_Init(Render *render);
+void Render3D_RenderMode(Render *render);
 
 #endif

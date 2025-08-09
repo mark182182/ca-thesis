@@ -8,8 +8,12 @@
 // use this instead of WindowShouldClose(), as it checks the escape key as well
 extern bool shouldClose;
 
+// forward declarations to prevent cyclic includes
 struct Render2D;
 typedef struct Render2D Render2D;
+
+struct Render3D;
+typedef struct Render3D Render3D;
 
 /**
  * The main render window that contains the render loop, where the the main
@@ -23,9 +27,8 @@ typedef struct Render {
 
   Menu *menu;
 
-  Camera2D camera2d;
   Render2D *render2d;
-  // Render3D *render3d;
+  Render3D *render3d;
 
   // NOTE: might be worth replacing this to a ring buffer
   int charPressed;
@@ -39,5 +42,7 @@ typedef struct Render {
 } Render;
 
 void Render_RenderWindow(Render *render);
+void Render_BeginDrawing();
+void Render_LogGlError();
 
 #endif

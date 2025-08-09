@@ -28,11 +28,11 @@ if (COMPAT_MODE)
     # For other GPUs, use OpenGL 4.3
     set(EXECUTABLE_NAME "ca_renderer_compat")
     set(CMAKE_C_ADDITIONAL_FLAGS "-march=core-avx-i")
-    set(GRAPHICS_LEVEL "GRAPHICS_API_OPENGL_33" CACHE STRING "Graphics API Level" FORCE)
+    set(GRAPHICS_LEVEL ${GRAPHICS_COMPAT_LEVEL} CACHE STRING "Graphics API Level" FORCE)
 else()
     set(EXECUTABLE_NAME "ca_renderer")
     set(CMAKE_C_ADDITIONAL_FLAGS "-mavx2")
-    set(GRAPHICS_LEVEL "GRAPHICS_API_OPENGL_43" CACHE STRING "Graphics API Level" FORCE)
+    set(GRAPHICS_LEVEL ${GRAPHICS_LEVEL} CACHE STRING "Graphics API Level" FORCE)
 endif()
 
 # Set compiler flags for the project
@@ -87,11 +87,10 @@ add_subdirectory(tests/e2e)
 
 file(GLOB_RECURSE CA_RENDERER_SRC CONFIGURE_DEPENDS "src/*.c")
 add_executable(${EXECUTABLE_NAME} "${CMAKE_SOURCE_DIR}/resources" ${CA_RENDERER_SRC})
-target_include_directories(${EXECUTABLE_NAME} PRIVATE src external/raylib/src)
+target_include_directories(${EXECUTABLE_NAME} PRIVATE src "external/raylib-${RAYLIB_VERSION}/src")
 
 
 # Raylib
-set(RAYLIB_VERSION 5.5)
 set(RAYLIB_CACHE_DIR "${CMAKE_SOURCE_DIR}/external/raylib-${RAYLIB_VERSION}")
 
 # First check if raylib is already built in our cache directory

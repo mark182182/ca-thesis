@@ -43,12 +43,18 @@ mkdir -p build
 
 # Need to patch raylib's CMakeLists.txt, otherwise it would try to use the CXX compiler as well, but it does not actually need it.
 
-raylib_cmake_path="external/raylib-5.5/CMakeLists.txt"
+raylib_version="5.5"
+# graphics_level="GRAPHICS_API_OPENGL_43"
+graphics_compat_level="GRAPHICS_API_OPENGL_33"
+graphics_level="GRAPHICS_API_OPENGL_43"
+
+raylib_cmake_path="external/raylib-${raylib_version}/CMakeLists.txt"
 if [ -f "$raylib_cmake_path" ]; then
     echo "Patching raylib CMakeLists.txt..."
     sed -i 's/project(raylib)/project(raylib LANGUAGES C)/' "$raylib_cmake_path"
 else
     echo "Warning: raylib CMakeLists.txt not found at $raylib_cmake_path"
+    exit 1
 fi
 
 # Needs MSYS2 and `pacman -S mingw-w64-x86_64-clang`, otherwise the MSVC linker would be used.
@@ -75,7 +81,10 @@ cmake -S . -B build \
     -DCLANG_VERBOSE="$verbose_mode" \
     -DCLANG_DUMP_AST="$dump_mode" \
     -DCOMPAT_MODE="$compat_mode" \
-    -DCOMMON_FLAGS="$COMMON_FLAGS"
+    -DCOMMON_FLAGS="$COMMON_FLAGS" \
+    -DRAYLIB_VERSION="$raylib_version" \
+    -DGRAPHICS_COMPAT_LEVEL="$graphics_compat_level" \
+    -DGRAPHICS_LEVEL="$graphics_level"
 
 # build the project
 cmake --build build $verbose_mode

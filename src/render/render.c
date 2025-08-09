@@ -2,7 +2,6 @@
 #include "const.h"
 #include "dstructs/arena.h"
 #include <assert.h>
-#include <raylib.h>
 #include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include "const.h"
@@ -11,6 +10,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "render_2d.h"
+#include "render_3d.h"
 
 bool shouldClose = false;
 
@@ -22,10 +22,6 @@ void Render_RenderWindow(Render *render) {
   render->menu = &menu;
 
   SetTargetFPS(render->fpsCap);
-
-  Camera2D camera = {0};
-  camera.zoom = 1.0f;
-  render->camera2d = camera;
 
   while (!shouldClose) {
     render->charPressed = GetCharPressed();
@@ -74,26 +70,16 @@ void Render_RenderWindow(Render *render) {
       menu.prevMode = menu.currentMode;
     }
 
-    BeginDrawing();
-
-    ClearBackground(DARKBLUE);
-
     // select the current mode
     // TODO: implement the switching on modes in the main menu
     switch (menu.currentMode) {
     case RENDER_MODE_INIT:
+      Render_BeginDrawing();
       menu.isVisible = true;
       break;
     case RENDER_MODE_2D:
       if (render->isModeFirstFrame) {
-        Arena mode2DArena =
-            Arena_Init("modeArena", &mode2DArenaStorage, MODE_2D_STORAGE_SIZE);
-        Arena frame2DArena = Arena_Init("frame2DArena", &frame2DArenaStorage,
-                                        FRAME_2D_STORAGE_SIZE);
-        render->mode2DArena = &mode2DArena;
-        render->frame2DArena = &frame2DArena;
-
-        Render2D render2d = Render2D_Init();
+        Render2D render2d = Render2D_Init(render);
         render->render2d = &render2d;
       }
       // can always call this, since at the first frame render2d should be
@@ -108,20 +94,10 @@ void Render_RenderWindow(Render *render) {
       break;
     case RENDER_MODE_3D:
       if (render->isModeFirstFrame) {
-        Arena mode3DArena =
-            Arena_Init("modeArena", &mode3DArenaStorage, MODE_3D_STORAGE_SIZE);
-
-        Arena frame3DArena = Arena_Init("frame3DArena", &frame3DArenaStorage,
-                                        FRAME_3D_STORAGE_SIZE);
-        render->mode3DArena = &mode3DArena;
-        render->frame3DArena = &frame3DArena;
-
-        // TODO: implement this
-        /*
-        Render3D render3D = Render3D_Init();
-        */
+        Render3D render3d = Render3D_Init(render);
+        render->render3d = &render3d;
       }
-      // Render3D_RenderMode(render);
+      Render3D_RenderMode(render);
       if (render->isModeFirstFrame) {
         render->isModeFirstFrame = false;
       }
@@ -146,4 +122,18 @@ void Render_RenderWindow(Render *render) {
   }
 
   // teardown the objects after the window has been closed
+}
+
+void Render_BeginDrawing() {
+  BeginDrawing();
+
+  ClearBackground(DARKBLUE);
+}
+
+void Render_LogGlError() {
+  // imported via raylib
+  int glError = glGetError();
+  if (glError > 0) {
+    printf("unable to render, error code: %d", glError);
+  }
 }

@@ -3,7 +3,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+
 int main() {
+  // TODO: Enable debug or use Renderdoc instead
+  // glEnable(GL_DEBUG_OUTPUT);
+  // glDebugMessageCallback(myDebugCallback, NULL);
+
   InitializeConstants();
 
   // load any long living resources here
@@ -27,5 +32,6 @@ int main() {
   };
 
   Render_RenderWindow(&render);
+
   return 0;
 }

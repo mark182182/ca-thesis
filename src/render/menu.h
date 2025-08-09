@@ -40,7 +40,7 @@ void Menu_DrawText(Menu *menu, Vector2 firstTextPos, Vector2 *currentTextPos,
                    Color textColor, void (*onCollisionFn)(Menu *menu));
 
 static void __Init_2D_Mode(Menu *menu);
-static void __Init_3D_mode(Menu *menu);
+static void __Init_3D_Mode(Menu *menu);
 static void __Close_Window(Menu *menu);
 
 #endif

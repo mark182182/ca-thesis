@@ -50,6 +50,6 @@ void Cells2D_InitArraysBasedOnCellSize(Arena *genArena, Cells2D *c2d);
 
 typedef struct Cells3D {
   // TODO: Before trying to re-creating the same logic what the render 2d is doing with Cells2D, take a look at what instanced 3d rendering requires
-} Cells2D;
+} Cells3D;
 
 #endif

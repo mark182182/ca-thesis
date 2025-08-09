@@ -9,13 +9,16 @@ struct Render;
 typedef struct Render Render;
 
 typedef struct Render2D {
-  // higher values mean slower updates
-  float render2DSpeed;
+  Camera2D camera;
+
   Cells2D firstC2d;
   Cells2D secondC2d;
+
+  // higher values mean slower updates
+  float render2DSpeed;
 } Render2D;
 
-Render2D Render2D_Init();
+Render2D Render2D_Init(Render *render);
 void Render2D_RenderMode(Render *render);
 
 #endif

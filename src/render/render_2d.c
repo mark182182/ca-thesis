@@ -10,9 +10,21 @@
 
 int currentGeneration = 0;
 
-Render2D Render2D_Init() {
-  Render2D render2d = {
-      .render2DSpeed = 0.4f, .firstC2d = {0}, .secondC2d = {0}};
+Render2D Render2D_Init(Render *render) {
+  Arena mode2DArena =
+      Arena_Init("modeArena", &mode2DArenaStorage, MODE_2D_STORAGE_SIZE);
+  Arena frame2DArena =
+      Arena_Init("frame2DArena", &frame2DArenaStorage, FRAME_2D_STORAGE_SIZE);
+  render->mode2DArena = &mode2DArena;
+  render->frame2DArena = &frame2DArena;
+
+  Camera2D camera = {0};
+  camera.zoom = 1.0f;
+
+  Render2D render2d = {.camera = camera,
+                       .firstC2d = {0},
+                       .secondC2d = {0},
+                       .render2DSpeed = 0.4f};
   return render2d;
 }
 
@@ -21,6 +33,7 @@ void Render2D_RenderMode(Render *render) {
   Render2D *render2d = render->render2d;
 
   if (render->isModeFirstFrame) {
+    printf("Entering 2D mode");
     Cells2D_InitArraysBasedOnCellSize(render->mode2DArena, &render2d->firstC2d);
     Cells2D_InitArraysBasedOnCellSize(render->mode2DArena,
                                       &render2d->secondC2d);
@@ -77,7 +90,9 @@ void Render2D_RenderMode(Render *render) {
 
   // update variables here
 
-  BeginMode2D(render->camera2d);
+  // TODO: decide on at what time should we start drawing
+  Render_BeginDrawing();
+  BeginMode2D(render2d->camera);
 
   // TODO: This should be drawn in a single call
   for (int i = 0; i < CELL_COUNT; i++) {

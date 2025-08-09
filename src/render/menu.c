@@ -32,7 +32,8 @@ void Menu_Draw(Menu *menu) {
 
   Menu_DrawTextDefault(menu, firstTextPos, &currentTextPos, "2D Mode",
                        __Init_2D_Mode);
-  Menu_DrawTextDefault(menu, firstTextPos, &currentTextPos, "3D Mode", noOp);
+  Menu_DrawTextDefault(menu, firstTextPos, &currentTextPos, "3D Mode",
+                       __Init_3D_Mode);
   Menu_DrawTextDefault(menu, firstTextPos, &currentTextPos, "Settings", noOp);
   Menu_DrawTextDefault(menu, firstTextPos, &currentTextPos, "Exit",
                        __Close_Window);
@@ -97,8 +98,11 @@ static void __Init_2D_Mode(Menu *menu) {
   }
 }
 
-static void __Init_3D_mode(Menu *menu) {
-  // TODO
+static void __Init_3D_Mode(Menu *menu) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    menu->currentMode = RENDER_MODE_3D;
+    menu->isVisible = false;
+  }
 }
 
 static void __Close_Window(Menu *menu) {
