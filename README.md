@@ -28,6 +28,5 @@ This project is part of a thesis work for rendering 2D/3D cellular automata in C
 
 # Tools
 
-- Profiler: https://github.com/wolfpld/tracy/tree/master
 - Debugger: https://github.com/EpicGamesExt/raddebugger and [debug.sh](debug.sh) script to gdb with the current build for e.g. segment faults or other issues.
 - clang-tidy: Linter for displaying warnings and errors in the code, which can be run, https://clang.llvm.org/extra/clang-tidy/
