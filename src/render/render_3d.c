@@ -10,10 +10,10 @@
 // TODO: rewrite this, onaly an example
 // NOTE: see scratch/ray.c examples
 // using power of 2 would be recommended
-static const int MAX_CUBES_X = 32; // how many cubes to draw in a row
+static const int MAX_CUBES_X = 16; // how many cubes to draw in a row
 static const int MAX_CUBES_Y =
-    32; // how many rows to draw in the current height
-static const int MAX_CUBES_Z = 32;
+    16; // how many rows to draw in the current height
+static const int MAX_CUBES_Z = 16;
 static const int NUM_TO_DRAW = MAX_CUBES_X * MAX_CUBES_Y * MAX_CUBES_Z;
 
 Render3D Render3D_Init(Render *render) {
@@ -154,26 +154,6 @@ void Render3D_RenderMode(Render *render) {
 
   BeginMode3D(render->render3d->camera);
 
-  if (frameNum < 500) {
-    randLowerLimit++;
-    randUpperLimit--;
-  } else {
-    randLowerLimit--;
-    randUpperLimit++;
-  }
-  if (frameNum == 1000) {
-    frameNum = 0;
-  }
-
-  for (int i = 0; i < NUM_TO_DRAW; i++) {
-    render->render3d->transforms[i].m12 =
-        GetRandomValue(-1 * render->deltaTime, render->deltaTime) * 2;
-    render->render3d->transforms[i].m13 =
-        GetRandomValue(-1 * render->deltaTime, render->deltaTime) * 2;
-    render->render3d->transforms[i].m14 =
-        GetRandomValue(-1 * render->deltaTime, render->deltaTime) * 2;
-  }
-
   DrawMeshInstanced(render->render3d->cube, render->render3d->matInstances,
                     render->render3d->transforms, NUM_TO_DRAW);
   Render_LogGlError();
@@ -181,7 +161,6 @@ void Render3D_RenderMode(Render *render) {
   DrawGrid(100, 1.0f);
 
   EndMode3D();
-  frameNum++;
 
   render->deltaTime += GetFrameTime();
 }
