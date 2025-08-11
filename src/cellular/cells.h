@@ -27,9 +27,8 @@ extern const int DIAGONAL_INDEXES_2D[];
 extern const int ADJECENT_INDEXES_2D[];
 
 extern const int TOP_INDEXES_3D[];
-extern const int RIGHT_INDEXES_3D[];
-extern const int LEFT_INDEXES_3D[];
 extern const int BOTTOM_INDEXES_3D[];
+extern const int SIDE_INDEXES_3D[];
 
 /*
  * SOA based container for cells to be drawn on the screen in 2D. The cells are
@@ -60,6 +59,7 @@ typedef struct Cells3D {
   // TODO: Before trying to re-creating the same logic what the render 2d is
   // doing with Cells2D, take a look at what instanced 3d rendering requires
   bool *is_alive;
+  // NOTE: might want to use float here for the positions
   int *positionsX;
   int *positionsY;
   int *positionsZ;
