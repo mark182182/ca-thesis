@@ -2,7 +2,6 @@
 #include <raymath.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "render/rlights.h"
 
 float deltaTime = 0.0F;
 
@@ -39,9 +38,6 @@ void can_render_cubes() {
   int ambientLoc = GetShaderLocation(shader, "ambient");
   SetShaderValue(shader, ambientLoc, (float[4]){0.2f, 0.2f, 0.2f, 1.0F},
                  SHADER_UNIFORM_VEC4);
-
-  CreateLight(LIGHT_DIRECTIONAL, (Vector3){50.0F, 50.0F, 0.0F},
-              (Vector3){0.0F, 0.0F, 0.0F}, WHITE, shader);
 
   Material matInstances = LoadMaterialDefault();
   matInstances.shader = shader;

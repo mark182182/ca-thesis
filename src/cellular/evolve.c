@@ -11,9 +11,9 @@ void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive) {
     for (int posY = 0; posY < SCREEN_HEIGHT; posY += CELL_HEIGHT_RATIO) {
       if (randomizeAlive) {
         bool is_alive = rand() % CELL_INITIAL_GRID_DENSITY == 0;
-        c2d->cells[i].is_alive = is_alive;
+        c2d->is_alive[i] = is_alive;
       } else {
-        c2d->cells[i].is_alive = 0;
+        c2d->is_alive[i] = 0;
       }
       c2d->positionsX[i] = posX;
       c2d->positionsY[i] = posY;
@@ -34,11 +34,10 @@ void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d) {
     // under or overpopulation
     if (neighbours < UNDERPOPULATION_UPPER_CAP ||
         neighbours > OVERPOPULATION_UPPER_CAP) {
-      outC2d->cells[i].is_alive = false;
+      outC2d->is_alive[i] = false;
       // reproduction
-    } else if (!inC2d->cells[i].is_alive &&
-               neighbours == OVERPOPULATION_UPPER_CAP) {
-      outC2d->cells[i].is_alive = true;
+    } else if (!inC2d->is_alive[i] && neighbours == OVERPOPULATION_UPPER_CAP) {
+      outC2d->is_alive[i] = true;
     }
   }
 }
@@ -57,7 +56,7 @@ int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
   for (int j = 0; j < CELL_NEIGHBOUR_SIZE; j++) {
     int relativeIdx = i + DIAGONAL_INDEXES_2D[j];
     if (relativeIdx >= 0 && relativeIdx <= arraySize &&
-        inC2d->cells[relativeIdx].is_alive) {
+        inC2d->is_alive[relativeIdx]) {
       // the relative diagonal cell
       neighbours++;
     }
@@ -66,7 +65,7 @@ int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
   for (int j = 0; j < CELL_NEIGHBOUR_SIZE; j++) {
     int relativeIdx = i + ADJECENT_INDEXES_2D[j];
     if (relativeIdx >= 0 && relativeIdx <= arraySize &&
-        inC2d->cells[relativeIdx].is_alive) {
+        inC2d->is_alive[relativeIdx]) {
       // the adjecent diagonal cell
       neighbours++;
     }

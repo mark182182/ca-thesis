@@ -8,6 +8,7 @@
 #include <immintrin.h>
 #include "dstructs/arena.h"
 #include <assert.h>
+#include <stdbool.h>
 
 /*
  * Diagonals relative to the current cell, e.g. if the ratio is 10:
@@ -27,8 +28,8 @@ const int ADJECENT_INDEXES_2D[] = {-1, +1, (-1 * CELL_HEIGHT_SIZE),
                                    CELL_HEIGHT_SIZE};
 
 void Cells2D_InitArraysBasedOnCellSize(Arena *arena, Cells2D *c2d) {
-  c2d->cells = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(Cell),
-                                        DEFAULT_ARENA_ALIGNMENT);
+  c2d->is_alive = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(bool),
+                                           DEFAULT_ARENA_ALIGNMENT);
 
   c2d->positionsX = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(int),
                                              DEFAULT_ARENA_ALIGNMENT);

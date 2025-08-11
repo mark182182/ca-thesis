@@ -4,18 +4,6 @@
 #include <raylib.h>
 #include "raymath.h"
 
-#define RLIGHTS_IMPLEMENTATION
-#include "rlights.h"
-
-// TODO: rewrite this, onaly an example
-// NOTE: see scratch/ray.c examples
-// using power of 2 would be recommended
-static const int MAX_CUBES_X = 16; // how many cubes to draw in a row
-static const int MAX_CUBES_Y =
-    16; // how many rows to draw in the current height
-static const int MAX_CUBES_Z = 16;
-static const int NUM_TO_DRAW = MAX_CUBES_X * MAX_CUBES_Y * MAX_CUBES_Z;
-
 Render3D Render3D_Init(Render *render) {
   Arena mode3DArena =
       Arena_Init("modeArena", &mode3DArenaStorage, MODE_3D_STORAGE_SIZE);
@@ -44,19 +32,18 @@ Render3D Render3D_Init(Render *render) {
     exit(1);
   }
 
-  // TODO: take a look on what these actually do
   // model-view-projection
+  // Local/Object to Clip space
   shader.locs[SHADER_LOC_MATRIX_MVP] = GetShaderLocation(shader, "mvp");
+  // World space
   shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+  // Local/Object to World space
   shader.locs[SHADER_LOC_MATRIX_MODEL] =
       GetShaderLocationAttrib(shader, "instanceTransform");
 
   int ambientLoc = GetShaderLocation(shader, "ambient");
   SetShaderValue(shader, ambientLoc, (float[4]){0.2f, 0.2f, 0.2f, 1.0f},
                  SHADER_UNIFORM_VEC4);
-
-  CreateLight(LIGHT_DIRECTIONAL, (Vector3){50.0f, 50.0f, 0.0f},
-              (Vector3){0.0f, 0.0f, 0.0f}, WHITE, shader);
 
   Material matInstances = LoadMaterialDefault();
   matInstances.shader = shader;
@@ -69,7 +56,7 @@ Render3D Render3D_Init(Render *render) {
 
   // Define transforms to be uploaded to GPU for instances
   Matrix *transforms = (Matrix *)RL_CALLOC(
-      NUM_TO_DRAW,
+      CUBE_COUNT,
       sizeof(Matrix)); // Pre-multiplied transformations passed to rlgl
 
   int currX = 0;
@@ -155,7 +142,7 @@ void Render3D_RenderMode(Render *render) {
   BeginMode3D(render->render3d->camera);
 
   DrawMeshInstanced(render->render3d->cube, render->render3d->matInstances,
-                    render->render3d->transforms, NUM_TO_DRAW);
+                    render->render3d->transforms, CUBE_COUNT);
   Render_LogGlError();
 
   DrawGrid(100, 1.0f);

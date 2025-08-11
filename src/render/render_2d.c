@@ -7,6 +7,7 @@
 #include "dstructs/arena.h"
 #include <time.h>
 #include <stdio.h>
+#include "const.h"
 
 int currentGeneration = 0;
 
@@ -114,11 +115,11 @@ void Render2D_RenderMode(Render *render) {
 
       // TODO: Make sure the user can set the current cell's alive state
       if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-        actualCd.cells[i].is_alive = !actualCd.cells[i].is_alive;
+        actualCd.is_alive[i] = !actualCd.is_alive[i];
       }
     }
 
-    if (actualCd.cells[i].is_alive) {
+    if (actualCd.is_alive[i]) {
       DrawRectangle(actualCd.positionsX[i], actualCd.positionsY[i],
                     CELL_HEIGHT_RATIO, CELL_WIDTH_RATIO, color);
     } else if (color.a == YELLOW.a && color.b == YELLOW.b) {
