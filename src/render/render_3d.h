@@ -8,11 +8,10 @@ typedef struct Render3D {
   Camera3D camera;
   Mesh cube;
   Material matInstances;
-  Shader shader;
   Matrix *transforms;
 
-  // Cells3D firstC3d;
-  // Cells3D secondC3d;
+  Cells3D firstC3d;
+  Cells3D secondC3d;
   float render3DSpeed;
 
 } Render3D;

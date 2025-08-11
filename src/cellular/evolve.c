@@ -23,8 +23,29 @@ void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive) {
   }
 }
 
-const uint8_t UNDERPOPULATION_UPPER_CAP = 2;
-const uint8_t OVERPOPULATION_UPPER_CAP = 3;
+void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive) {
+  int i = 0;
+  for (int x = 0; x < MAX_CUBES_X; x = x + CUBE_SIZE) {
+    for (int y = 0; y < MAX_CUBES_Y; y = y + CUBE_SIZE) {
+      for (int z = 0; z < MAX_CUBES_Z; z = z + CUBE_SIZE) {
+        if (randomizeAlive) {
+          bool is_alive = rand() % CELL_INITIAL_GRID_DENSITY == 0;
+          c3d->is_alive[i] = is_alive;
+        } else {
+          c3d->is_alive[i] = 0;
+        }
+        c3d->positionsX[i] = x;
+        c3d->positionsY[i] = y;
+        c3d->positionsZ[i] = z;
+
+        i++;
+      }
+    }
+  }
+}
+
+static const uint8_t UNDERPOPULATION_UPPER_CAP = 2;
+static const uint8_t OVERPOPULATION_UPPER_CAP = 3;
 
 // TODO: use a compute shader instead (since OpenGL 4.3)
 // possibly binding the 2 SSBOs and call glDispatchCompute and glMemoryBarrier

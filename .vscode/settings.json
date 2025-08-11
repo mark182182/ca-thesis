@@ -93,7 +93,8 @@
     "render_3d.h": "c",
     "rlights.h": "c",
     "glad.h": "c",
-    "gl.h": "c"
+    "gl.h": "c",
+    "evolve.h": "c"
   },
   // Disable GitHub Copilot for C files
   "github.copilot.enable": {

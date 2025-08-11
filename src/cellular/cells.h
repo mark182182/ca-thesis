@@ -23,6 +23,9 @@ typedef enum Cells3DParams {
   CUBE_COUNT = MAX_CUBES_X * MAX_CUBES_Y * MAX_CUBES_Z
 } Cells3DParams;
 
+extern float CUBE_SIZE;
+
+// Moore neighborhood
 extern const int DIAGONAL_INDEXES_2D[];
 extern const int ADJECENT_INDEXES_2D[];
 
@@ -53,8 +56,6 @@ typedef struct Cells2D {
   Color **colors;
 } Cells2D;
 
-void Cells2D_InitArraysBasedOnCellSize(Arena *genArena, Cells2D *c2d);
-
 typedef struct Cells3D {
   // TODO: Before trying to re-creating the same logic what the render 2d is
   // doing with Cells2D, take a look at what instanced 3d rendering requires
@@ -64,5 +65,8 @@ typedef struct Cells3D {
   int *positionsY;
   int *positionsZ;
 } Cells3D;
+
+void Cells2D_InitArraysBasedOnCellSize(Arena *genArena, Cells2D *c2d);
+void Cells3D_InitArraysBasedOnCellSize(Arena *genArena, Cells3D *c3d);
 
 #endif

@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "const.h"
 
-int currentGeneration = 0;
+static int currentGeneration = 0;
 
 Render2D Render2D_Init(Render *render) {
   Arena mode2DArena =
@@ -58,8 +58,6 @@ void Render2D_RenderMode(Render *render) {
       EvolveGOL2D_InitializeCells(&secondCd, false);
       currentGeneration = 0;
     }
-
-
 
     if (pressed == 'w') {
       render2DSpeed -= 0.001f;

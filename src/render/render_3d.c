@@ -3,6 +3,10 @@
 
 #include <raylib.h>
 #include "raymath.h"
+#include "cellular/cells.h"
+#include "cellular/evolve.h"
+
+static int currentGeneration = 0;
 
 Render3D Render3D_Init(Render *render) {
   Arena mode3DArena =
@@ -21,32 +25,31 @@ Render3D Render3D_Init(Render *render) {
   camera.fovy = 90.0f;
   camera.projection = CAMERA_PERSPECTIVE;
 
-  float cubeSize = 1.0f; // 12 uniformly sized edges
-  Mesh cube = GenMeshCube(cubeSize, cubeSize, cubeSize);
+  Mesh cube = GenMeshCube(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
 
-  Shader shader = LoadShader("resources/shaders/lighting_instancing.vs",
-                             "resources/shaders/lighting.fs");
+  // Shader shader = LoadShader("resources/shaders/lighting_instancing.vs",
+  //                            "resources/shaders/lighting.fs");
 
-  if (!IsShaderValid(shader)) {
-    printf("Invalid shader: %d\n", shader.id);
-    exit(1);
-  }
+  // if (!IsShaderValid(shader)) {
+  //   printf("Invalid shader: %d\n", shader.id);
+  //   exit(1);
+  // }
 
-  // model-view-projection
-  // Local/Object to Clip space
-  shader.locs[SHADER_LOC_MATRIX_MVP] = GetShaderLocation(shader, "mvp");
-  // World space
-  shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-  // Local/Object to World space
-  shader.locs[SHADER_LOC_MATRIX_MODEL] =
-      GetShaderLocationAttrib(shader, "instanceTransform");
+  // // model-view-projection
+  // // Local/Object to Clip space
+  // shader.locs[SHADER_LOC_MATRIX_MVP] = GetShaderLocation(shader, "mvp");
+  // // World space
+  // shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+  // // Local/Object to World space
+  // shader.locs[SHADER_LOC_MATRIX_MODEL] =
+  //     GetShaderLocationAttrib(shader, "instanceTransform");
 
-  int ambientLoc = GetShaderLocation(shader, "ambient");
-  SetShaderValue(shader, ambientLoc, (float[4]){0.2f, 0.2f, 0.2f, 1.0f},
-                 SHADER_UNIFORM_VEC4);
+  // int ambientLoc = GetShaderLocation(shader, "ambient");
+  // SetShaderValue(shader, ambientLoc, (float[4]){0.2f, 0.2f, 0.2f, 1.0f},
+  //                SHADER_UNIFORM_VEC4);
 
   Material matInstances = LoadMaterialDefault();
-  matInstances.shader = shader;
+  // matInstances.shader = shader;
   matInstances.maps[MATERIAL_MAP_DIFFUSE].color = RED;
 
   if (!IsMaterialValid(matInstances)) {
@@ -54,36 +57,8 @@ Render3D Render3D_Init(Render *render) {
     exit(1);
   }
 
-  // Define transforms to be uploaded to GPU for instances
-  Matrix *transforms = (Matrix *)RL_CALLOC(
-      CUBE_COUNT,
-      sizeof(Matrix)); // Pre-multiplied transformations passed to rlgl
-
-  int currX = 0;
-  int currY = 0;
-  int currZ = 0;
-
   // TODO: optional: draw lines around the whole partitioned space, so the
   // bounds are clearly visible
-  int tIdx = 0;
-  for (int x = 0; x < MAX_CUBES_X; x = x + cubeSize) {
-    for (int y = 0; y < MAX_CUBES_Y; y = y + cubeSize) {
-      for (int z = 0; z < MAX_CUBES_Z; z = z + cubeSize) {
-        Matrix translation = MatrixTranslate(x, y, z);
-
-        // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
-        transforms[tIdx] = translation;
-        tIdx++;
-      }
-    }
-    // printf("\nDrawn %d cubes\n", tIdx + 1);
-  }
-
-  // TODO: Remove this, it is just to better understand what's going on
-  // Matrix translation = MatrixTranslate(currentCol, currentHeight,
-  // currentDepth);
-
-  // transforms[i] = translation;
 
   /*
   TODO: How to render 3D cellular automata:
@@ -106,12 +81,14 @@ Render3D Render3D_Init(Render *render) {
   have to check which voxel points to with vector
   */
 
-  Render3D render3d = {.camera = camera,
-                       .cube = cube,
-                       .matInstances = matInstances,
-                       .shader = shader,
-                       .render3DSpeed = 0.2f,
-                       .transforms = transforms};
+  Render3D render3d = {
+      .camera = camera,
+      .cube = cube,
+      .matInstances = matInstances,
+      //  .shader = shader,
+      .render3DSpeed = 0.2f,
+      //  .transforms = transforms
+  };
   return render3d;
 }
 
@@ -122,27 +99,65 @@ static int randUpperLimit = 500;
 void Render3D_RenderMode(Render *render) {
   if (render->isModeFirstFrame) {
     printf("Entering 3D mode");
+    Cells3D_InitArraysBasedOnCellSize(render->mode3DArena,
+                                      &render->render3d->firstC3d);
+    Cells3D_InitArraysBasedOnCellSize(render->mode3DArena,
+                                      &render->render3d->secondC3d);
+
+    Evolve3D_InitializeCells(&render->render3d->firstC3d, true);
+    Evolve3D_InitializeCells(&render->render3d->secondC3d, false);
   }
+
   UpdateCamera(&render->render3d->camera, CAMERA_FREE);
   float cameraPos[3] = {render->render3d->camera.position.x,
                         render->render3d->camera.position.y,
                         render->render3d->camera.position.z};
-  SetShaderValue(render->render3d->shader,
-                 render->render3d->shader.locs[SHADER_LOC_VECTOR_VIEW],
-                 cameraPos, SHADER_UNIFORM_VEC3);
+  // SetShaderValue(render->render3d->shader,
+  //                render->render3d->shader.locs[SHADER_LOC_VECTOR_VIEW],
+  //                cameraPos, SHADER_UNIFORM_VEC3);
 
-  int deltaTimeLoc = GetShaderLocation(render->render3d->shader, "deltaTime");
-  SetShaderValue(render->render3d->shader, deltaTimeLoc, &render->deltaTime,
-                 SHADER_UNIFORM_FLOAT);
+  // int deltaTimeLoc = GetShaderLocation(render->render3d->shader,
+  // "deltaTime"); SetShaderValue(render->render3d->shader, deltaTimeLoc,
+  // &render->deltaTime,
+  //                SHADER_UNIFORM_FLOAT);
   // TOOD: update the light shader here, if needed
 
-  // TODO: decide on at what time should we start drawing
+  // TODO: invoke evolve next gen here
+  currentGeneration++;
+
+  Cells3D actualCd = currentGeneration % 2 == 0 ? render->render3d->secondC3d
+                                                : render->render3d->firstC3d;
+
+  // TODO: DO NOT CALLOC AND FREE IN ALL FRAMES!
+  // Define transforms to be uploaded to GPU for instances
+  Matrix *transforms = (Matrix *)RL_CALLOC(
+      CUBE_COUNT,
+      sizeof(Matrix)); // Pre-multiplied transformations passed to rlgl
+
+  int tIdx = 0;
+  for (int x = 0; x < actualCd.positionsX; x++) {
+    for (int y = 0; y < actualCd.positionsY; y++) {
+      for (int z = 0; z < actualCd.positionsZ; z++) {
+        Matrix translation = MatrixTranslate(x, y, z);
+
+        // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
+        // TODO: segfault here
+        transforms[tIdx] = translation;
+        tIdx++;
+      }
+    }
+    // printf("\nDrawn %d cubes\n", tIdx + 1);
+  }
+
   Render_BeginDrawing();
 
   BeginMode3D(render->render3d->camera);
 
   DrawMeshInstanced(render->render3d->cube, render->render3d->matInstances,
-                    render->render3d->transforms, CUBE_COUNT);
+                    transforms, CUBE_COUNT);
+  // TODO: DO NOT CALLOC AND FREE IN ALL FRAMES!
+  RL_FREE(transforms);
+
   Render_LogGlError();
 
   DrawGrid(100, 1.0f);

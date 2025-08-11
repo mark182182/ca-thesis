@@ -10,6 +10,8 @@
 #include <assert.h>
 #include <stdbool.h>
 
+float CUBE_SIZE = 1.0f; // 12 uniformly sized edges
+
 /*
  * Diagonals relative to the current cell, e.g. if the ratio is 10:
  * top-left  bottom-left bottom-right    top-right
@@ -53,7 +55,7 @@ void Cells2D_InitArraysBasedOnCellSize(Arena *arena, Cells2D *c2d) {
                                          DEFAULT_ARENA_ALIGNMENT);
 }
 
-void Cells3DInitArraysBasedOnCellSize(Arena *arena, Cells3D *c3d) {
+void Cells3D_InitArraysBasedOnCellSize(Arena *arena, Cells3D *c3d) {
   c3d->is_alive = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(bool),
                                            DEFAULT_ARENA_ALIGNMENT);
 
@@ -63,6 +65,6 @@ void Cells3DInitArraysBasedOnCellSize(Arena *arena, Cells3D *c3d) {
   c3d->positionsY = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(int),
                                              DEFAULT_ARENA_ALIGNMENT);
 
-  c3d->positionsY = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(int),
+  c3d->positionsZ = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(int),
                                              DEFAULT_ARENA_ALIGNMENT);
 }

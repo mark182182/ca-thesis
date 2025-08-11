@@ -115,7 +115,7 @@ void can_render_cubes() {
   CloseWindow();
 }
 
-void can_render_neighbours() {
+void can_render_moore_neighbours() {
   InitWindow(640, 480, "can_render_neighbours");
 
   Camera3D camera = {0};
@@ -241,6 +241,6 @@ void can_render_neighbours() {
 
 int main() {
   // can_render_cubes();
-  can_render_neighbours();
+  can_render_moore_neighbours();
   return 0;
 }

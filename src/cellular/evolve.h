@@ -21,6 +21,11 @@ extern int rule1DBits;
  */
 void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive);
 /*
+ *Same as in 2D
+ */
+void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive);
+
+/*
  * Evolves the given grid to the next generation for 2D rendering.
  *
  * Ruleset (from Wikipedia):
