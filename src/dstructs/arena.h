@@ -38,6 +38,9 @@ static uint8_t frame2DArenaStorage[FRAME_2D_STORAGE_SIZE];
 static uint8_t frame3DArenaStorage[FRAME_3D_STORAGE_SIZE];
 
 static const uint8_t DEFAULT_ARENA_ALIGNMENT = 32;
+// needed for raylib's Matrix struct, as 4 blocks of floats will use the SSE
+// operation that needs 16 bit alignment
+static const uint8_t DEFAULT_MATRIX_ALIGNMENT = 16;
 
 /**
  *

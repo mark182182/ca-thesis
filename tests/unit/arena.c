@@ -141,4 +141,6 @@ int main() {
 
   int testsLength = sizeof(tests) / sizeof(tests[0]);
   runTests(__FILE__, tests, testsLength);
+
+  return 0;
 }

@@ -134,6 +134,6 @@ void Render_LogGlError() {
   // imported via raylib
   int glError = glGetError();
   if (glError > 0) {
-    printf("unable to render, error code: %d", glError);
+    printf("\nunable to render, error code: %d", glError);
   }
 }

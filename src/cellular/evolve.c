@@ -44,20 +44,19 @@ void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive) {
   }
 }
 
-static const uint8_t UNDERPOPULATION_UPPER_CAP = 2;
-static const uint8_t OVERPOPULATION_UPPER_CAP = 3;
-
 // TODO: use a compute shader instead (since OpenGL 4.3)
 // possibly binding the 2 SSBOs and call glDispatchCompute and glMemoryBarrier
+// or paralellize on the CPU side
 void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d) {
   for (int i = 0; i < CELL_COUNT; i++) {
     int neighbours = __GOL2DCheckNeighbours(inC2d, i);
     // under or overpopulation
-    if (neighbours < UNDERPOPULATION_UPPER_CAP ||
-        neighbours > OVERPOPULATION_UPPER_CAP) {
+    if (neighbours < UNDERPOPULATION_UPPER_CAP_2D ||
+        neighbours > OVERPOPULATION_UPPER_CAP_2D) {
       outC2d->is_alive[i] = false;
       // reproduction
-    } else if (!inC2d->is_alive[i] && neighbours == OVERPOPULATION_UPPER_CAP) {
+    } else if (!inC2d->is_alive[i] &&
+               neighbours == OVERPOPULATION_UPPER_CAP_2D) {
       outC2d->is_alive[i] = true;
     }
   }
@@ -73,6 +72,19 @@ void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d) {
 int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
   int neighbours = 0;
   int arraySize = (CELL_COUNT - 1);
+
+  /*
+   * Top 9 cubes that are above the current one
+   */
+  const int TOP_INDEXES_3D[] = {};
+  /*
+   * Bottom 9 cubes that are below the current one
+   */
+  const int BOTTOM_INDEXES_3D[] = {};
+  /*
+   * The 8 cubes that alongside the current cube's height
+   */
+  const int SIDE_INDEXES_3D[] = {};
 
   for (int j = 0; j < CELL_NEIGHBOUR_SIZE; j++) {
     int relativeIdx = i + DIAGONAL_INDEXES_2D[j];
@@ -93,4 +105,52 @@ int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
   }
 
   return neighbours;
+}
+
+// TODO: It should receive the exact ruleset as well (e.g. R(4555) or R(5766))
+void EvolveGOL3D_NextGeneration(Cells3D *outC3d, const Cells3D *inC3d) {
+  for (int i = 0; i < CELL_COUNT; i++) {
+    int neighbours = __GOL3DCheckNeighbours(inC3d, i);
+    // under or overpopulation
+    if (neighbours < UNDERPOPULATION_UPPER_CAP_3D ||
+        neighbours > OVERPOPULATION_UPPER_CAP_3D) {
+      outC3d->is_alive[i] = false;
+      // reproduction
+    } else if (!inC3d->is_alive[i] &&
+               neighbours == OVERPOPULATION_UPPER_CAP_3D) {
+      outC3d->is_alive[i] = true;
+    }
+  }
+}
+
+int __GOL3DCheckNeighbours(Cells3D *inC2d, int i) {
+  int neighbours = 0;
+  int arraySize = (CUBE_COUNT - 1);
+
+  for (int j = 0; j < TOP_NEIGHBOUR_SIZE; j++) {
+    int relativeIdx = i + TOP_INDEXES_3D[j];
+    if (relativeIdx >= 0 && relativeIdx <= arraySize &&
+        inC2d->is_alive[relativeIdx]) {
+      // the cube at the top
+      neighbours++;
+    }
+  }
+
+  for (int j = 0; j < BOTTOM_NEIGHBOUR_SIZE; j++) {
+    int relativeIdx = i + BOTTOM_INDEXES_3D[j];
+    if (relativeIdx >= 0 && relativeIdx <= arraySize &&
+        inC2d->is_alive[relativeIdx]) {
+      // the cube at the bottom
+      neighbours++;
+    }
+  }
+
+  for (int j = 0; j < SIDE_NEIGHBOUR_SIZE; j++) {
+    int relativeIdx = i + SIDE_INDEXES_3D[j];
+    if (relativeIdx >= 0 && relativeIdx <= arraySize &&
+        inC2d->is_alive[relativeIdx]) {
+      // the cube at the side
+      neighbours++;
+    }
+  }
 }

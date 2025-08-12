@@ -20,7 +20,11 @@ typedef enum Cells3DParams {
   MAX_CUBES_X = 16,
   MAX_CUBES_Y = 16,
   MAX_CUBES_Z = 16,
-  CUBE_COUNT = MAX_CUBES_X * MAX_CUBES_Y * MAX_CUBES_Z
+  CUBE_COUNT = MAX_CUBES_X * MAX_CUBES_Y * MAX_CUBES_Z,
+  // the 3D Moore neighbourhood consits of the 26 neighbouring cubes
+  TOP_NEIGHBOUR_SIZE = 9,
+  BOTTOM_NEIGHBOUR_SIZE = 9,
+  SIDE_NEIGHBOUR_SIZE = 8
 } Cells3DParams;
 
 extern float CUBE_SIZE;

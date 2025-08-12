@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "dstructs/arena.h"
+#include "cellular/cells.h"
+#include "cellular/evolve.h"
+
 float deltaTime = 0.0F;
 
 float renderSpeed = 0.4f;
@@ -32,7 +36,6 @@ void can_render_cubes() {
   Material matBlue = LoadMaterialDefault();
   matBlue.maps[MATERIAL_MAP_DIFFUSE].color = BLUE;
 
-  const int numToDraw = 4;
   // Matrix *transforms = (Matrix *)RL_CALLOC(
   //     numToDraw,
   //     sizeof(Matrix)); // Pre-multiplied transformations passed to rlgl
@@ -115,7 +118,7 @@ void can_render_cubes() {
   CloseWindow();
 }
 
-void can_render_moore_neighbours() {
+void can_render_moore_neighbours_3d() {
   InitWindow(640, 480, "can_render_neighbours");
 
   Camera3D camera = {0};
@@ -171,7 +174,7 @@ void can_render_moore_neighbours() {
   Matrix translationBottom7 = MatrixTranslate(-1.0F, -1.0F, -1.0F);
   Matrix translationBottom8 = MatrixTranslate(-1.0F, -1.0F, 1.0F);
   Matrix translationBottom9 = MatrixTranslate(1.0F, -1.0F, -1.0F);
-  
+
   /*
    * The 8 cubes
    */
@@ -239,8 +242,104 @@ void can_render_moore_neighbours() {
   CloseWindow();
 }
 
+void can_specify_neighbour_indexes() {
+  InitWindow(640, 480, "can_specify_neighbour_indexes");
+
+  Camera3D camera = {0};
+  camera.position = (Vector3){.x = 10.0F, .y = 10.0F, .z = 10.0F};
+  camera.target = (Vector3){.x = 0.0F, .y = 0.0F, .z = 0.0F};
+  camera.up = (Vector3){.x = 0.0F, .y = 1.0F, .z = 0.0F};
+  camera.fovy = 90.0F;
+  camera.projection = CAMERA_PERSPECTIVE;
+
+  float cubeSize = 1.0F; // 12 uniformly sized edges
+  Mesh cube = GenMeshCube(cubeSize, cubeSize, cubeSize);
+
+  Material matWhite = LoadMaterialDefault();
+  matWhite.maps[MATERIAL_MAP_DIFFUSE].color = WHITE;
+
+  Material matRed = LoadMaterialDefault();
+  matRed.maps[MATERIAL_MAP_DIFFUSE].color = RED;
+
+  Material matGreen = LoadMaterialDefault();
+  matGreen.maps[MATERIAL_MAP_DIFFUSE].color = GREEN;
+
+  Material matBlue = LoadMaterialDefault();
+  matBlue.maps[MATERIAL_MAP_DIFFUSE].color = BLUE;
+
+  size_t arenaStorageSize = 16 * 1024 * 1024;
+  uint8_t arenaStorage[arenaStorageSize];
+  Arena arena = Arena_Init("modeArena", &arenaStorage, arenaStorageSize);
+
+  Cells3D c3d = {0};
+  Cells3D_InitArraysBasedOnCellSize(&arena, &c3d);
+
+  Evolve3D_InitializeCells(&c3d, true);
+
+  Matrix *transforms = Arena_AllocAlignedZeroed(
+      &arena, CUBE_COUNT * sizeof(Matrix), DEFAULT_MATRIX_ALIGNMENT);
+
+  Shader shader = LoadShader("resources/shaders/lighting_instancing.vs",
+                             "resources/shaders/lighting.fs");
+  if (!IsShaderValid(shader)) {
+    printf("Invalid shader: %d\n", shader.id);
+    exit(1);
+  }
+
+  // model-view-projection
+  // Local/Object to Clip space
+  shader.locs[SHADER_LOC_MATRIX_MVP] = GetShaderLocation(shader, "mvp");
+  // World space
+  shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+  // Local/Object to World space
+  shader.locs[SHADER_LOC_MATRIX_MODEL] =
+      GetShaderLocationAttrib(shader, "instanceTransform");
+
+  int ambientLoc = GetShaderLocation(shader, "ambient");
+  SetShaderValue(shader, ambientLoc, (float[4]){0.2f, 0.2f, 0.2f, 1.0f},
+                 SHADER_UNIFORM_VEC4);
+
+  Material matInstances = LoadMaterialDefault();
+  matInstances.shader = shader;
+  matInstances.maps[MATERIAL_MAP_DIFFUSE].color = RED;
+
+  while (!WindowShouldClose()) {
+    UpdateCamera(&camera, CAMERA_FREE);
+    float cameraPos[3] = {camera.position.x, camera.position.y,
+                          camera.position.z};
+    BeginDrawing();
+    ClearBackground(DARKBLUE);
+
+    BeginMode3D(camera);
+
+    for (int tIdx = 0; tIdx < CUBE_COUNT; tIdx++) {
+      bool is_alive = c3d.is_alive[tIdx];
+      int x = c3d.positionsX[tIdx];
+      int y = c3d.positionsY[tIdx];
+      int z = c3d.positionsZ[tIdx];
+
+      if (is_alive) {
+        Matrix translation = MatrixTranslate(x, y, z);
+        // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
+
+        // TODO: Finish the test
+        transforms[tIdx] = translation;
+      }
+    }
+
+    DrawMeshInstanced(cube, matInstances, transforms, CUBE_COUNT);
+
+    DrawGrid(100, 1.0F);
+
+    EndMode3D();
+    EndDrawing();
+  }
+  CloseWindow();
+}
+
 int main() {
   // can_render_cubes();
-  can_render_moore_neighbours();
+  // can_render_moore_neighbours_3d();
+  can_specify_neighbour_indexes();
   return 0;
 }

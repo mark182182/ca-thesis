@@ -15,9 +15,21 @@
 // 8 bits representing all one-dimensional cellular automata rules
 extern int rule1DBits;
 
+typedef enum Evolve2DParams {
+  UNDERPOPULATION_UPPER_CAP_2D = 2,
+  OVERPOPULATION_UPPER_CAP_2D = 3
+} Evolve2DParams;
+
+// TODO: hard-coded rule 4555 would need to be changed to use dynamic rulesets
+// instead
+typedef enum Evolve3DParams {
+  UNDERPOPULATION_UPPER_CAP_3D = 4,
+  OVERPOPULATION_UPPER_CAP_3D = 5
+} Evolve3DParams;
+
 /*
- * Generate initial values (e.g. position, color) for each cells in the grid,
- * with optionally setting the alive state at random.
+ * Generate initial values (e.g. position, color) for each cells in the
+ * grid, with optionally setting the alive state at random.
  */
 void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive);
 /*
@@ -40,7 +52,34 @@ void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive);
 void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d);
 int __GOL2DCheckNeighbours(Cells2D *inC2d, int i);
 
-// void EvolveGOL3D_NextGeneration(Cells3D *outC3d, const Cells2D *inC3d);
+/**
+ * Evolve the given partitioned space to the next generation for 3D rendering.
+ *
+ * The default rules for 2D can be applied, but in 3D there are many more
+ * neighbors, so most configurations quickly die out. Because of this, the rules
+ * that are implemented are usually are different for Game of Life in 3D.
+ *
+ * These were most notably researched by Carter Bays, which is generally called
+ * "3D Life". These are different rulesets which support more stable and complex
+ * patterns that don't go extinct that rapidly.
+ *
+ * From his work "Candidates for the Game of Life in Three Dimensions" the
+ * rulesets are defined by the number of minimum and maximum neighbors that a
+ * living cell needs to survive El≤E≤Eu and the number of minimum and maximum
+ * neighbors that a living cell needs to reproduce is Fl≤F≤Fu. This is usually
+ * written in the form of R(El, Eu, Fl, Fu).
+ *
+ * Examples:
+ * Rule R = (5766): A living cell survives if it has 5, 6, or 7 neighbors. It
+ * dies if it has fewer than 5 or more than 7. A dead cell becomes alive if it
+ * has 6 neighbors.
+ *
+ * Rule R = (4555): A living cell survives if it has 4 or 5 neighbors. It dies
+ * if it has fewer than 4 or more than 5. A
+ * dead cell becomes alive if it has 5 neighbors.
+ */
+void EvolveGOL3D_NextGeneration(Cells3D *outC3d, const Cells3D *inC3d);
+int __GOL3DCheckNeighbours(Cells3D *inC2d, int i);
 
 /**
  * TODO: Do this after 3D
