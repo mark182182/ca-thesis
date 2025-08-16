@@ -2,6 +2,7 @@
 #include <raymath.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "dstructs/arena.h"
 #include "cellular/cells.h"
@@ -10,6 +11,9 @@
 float deltaTime = 0.0F;
 
 float renderSpeed = 0.4f;
+
+static const size_t arenaStorageSize = 16 * 1024 * 1024;
+static uint8_t arenaStorage[arenaStorageSize];
 
 void can_render_cubes() {
   InitWindow(640, 480, "can_render_cubes");
@@ -118,8 +122,8 @@ void can_render_cubes() {
   CloseWindow();
 }
 
-void can_render_moore_neighbours_3d() {
-  InitWindow(640, 480, "can_render_neighbours");
+void can_identify_moore_neighbours_3d() {
+  InitWindow(640, 480, "can_identify_moore_neighbours_3d");
 
   Camera3D camera = {0};
   camera.position = (Vector3){.x = 10.0F, .y = 10.0F, .z = 10.0F};
@@ -239,6 +243,7 @@ void can_render_moore_neighbours_3d() {
     EndMode3D();
     EndDrawing();
   }
+
   CloseWindow();
 }
 
@@ -267,17 +272,133 @@ void can_specify_neighbour_indexes() {
   Material matBlue = LoadMaterialDefault();
   matBlue.maps[MATERIAL_MAP_DIFFUSE].color = BLUE;
 
-  size_t arenaStorageSize = 16 * 1024 * 1024;
-  uint8_t arenaStorage[arenaStorageSize];
   Arena arena = Arena_Init("modeArena", &arenaStorage, arenaStorageSize);
 
   Cells3D c3d = {0};
   Cells3D_InitArraysBasedOnCellSize(&arena, &c3d);
 
-  Evolve3D_InitializeCells(&c3d, true);
+  int testMaxCubesX = 3;
+  int testMaxCubesY = 3;
+  int testMaxCubesZ = 3;
+  int testCubeCount = testMaxCubesX * testMaxCubesY * testMaxCubesZ;
+
+  int i = 0;
+  for (int x = 0; x < testMaxCubesX; x++) {
+    for (int y = 0; y < testMaxCubesY; y++) {
+      for (int z = 0; z < testMaxCubesZ; z++) {
+        c3d.positionsX[i] = x;
+        c3d.positionsY[i] = y;
+        c3d.positionsZ[i] = z;
+
+        i++;
+      }
+    }
+  }
+
+  /*
+    The cube at the center: x=1; y=1; z=1; which is at tIdx=13
+    Top indexes to find: x=0,1,2; y=2; z=0,1,2
+    Bottom indexes to find: x=0,1,2; y=0; z=0,1,2
+    Side indexes to find: x=0,1,2 y=1; z=0,1,2, where x != 1 && y != 1 && z !=1
+
+    c = tIdx: 13; x=1; y=1; z=1
+
+    bottom = tIdx: 0; x=0; y=0; z=0
+    bottom = tIdx: 1; x=0; y=0; z=1
+    bottom = tIdx: 2; x=0; y=0; z=2
+    bottom = tIdx: 9; x=1; y=0; z=0
+    bottom = tIdx: 10; x=1; y=0; z=1
+    bottom = tIdx: 11; x=1; y=0; z=2
+    bottom = tIdx: 18; x=2; y=0; z=0
+    bottom = tIdx: 19; x=2; y=0; z=1
+    bottom = tIdx: 20; x=2; y=0; z=2
+    top = tIdx: 6; x=0; y=2; z=0
+    top = tIdx: 7; x=0; y=2; z=1
+    top = tIdx: 8; x=0; y=2; z=2
+    top = tIdx: 15; x=1; y=2; z=0
+    top = tIdx: 16; x=1; y=2; z=1
+    top = tIdx: 17; x=1; y=2; z=2
+    top = tIdx: 24; x=2; y=2; z=0
+    top = tIdx: 25; x=2; y=2; z=1
+    top = tIdx: 26; x=2; y=2; z=2
+    sides = tIdx: 3; x=0; y=1; z=0
+    sides = tIdx: 4; x=0; y=1; z=1
+    sides = tIdx: 5; x=0; y=1; z=2
+    sides = tIdx: 12; x=1; y=1; z=0
+    sides = tIdx: 14; x=1; y=1; z=2
+    sides = tIdx: 21; x=2; y=1; z=0
+    sides = tIdx: 22; x=2; y=1; z=1
+    sides = tIdx: 23; x=2; y=1; z=2
+
+    neighbour tIdx  relativeIdx
+    bottom  0 -13
+    bottom  1 -12
+    bottom  2 -11
+    bottom  9 -4
+    bottom  10  -3
+    bottom  11  -2
+    bottom  18  5
+    bottom  19  6
+    bottom  20  7
+    top 6 -7
+    top 7 -6
+    top 8 -5
+    top 15  2
+    top 16  3
+    top 17  4
+    top 24  11
+    top 25  12
+    top 26  13
+    sides 3 -10
+    sides 4 -9
+    sides 5 -8
+    sides 12  -1
+    sides 14  1
+    sides 21  8
+    sides 22  9
+    sides 23  10
+  */
+
+  for (int tIdx = 0; tIdx < testCubeCount; tIdx++) {
+    int x = c3d.positionsX[tIdx];
+    int y = c3d.positionsY[tIdx];
+    int z = c3d.positionsZ[tIdx];
+
+    if (x == 1 && y == 1 && z == 1) {
+      printf("c = tIdx: %d; x=%d; y=%d; z=%d\n", tIdx, x, y, z);
+    }
+
+    // top
+    if ((x == 0 && y == 2 && z == 0) || (x == 0 && y == 2 && z == 1) ||
+        (x == 0 && y == 2 && z == 2) || (x == 1 && y == 2 && z == 0) ||
+        (x == 1 && y == 2 && z == 1) || (x == 1 && y == 2 && z == 2) ||
+        (x == 2 && y == 2 && z == 0) || (x == 2 && y == 2 && z == 1) ||
+        (x == 2 && y == 2 && z == 2)) {
+      printf("top = tIdx: %d; x=%d; y=%d; z=%d\n", tIdx, x, y, z);
+    }
+
+    // bottom
+    if ((x == 0 && y == 0 && z == 0) || (x == 0 && y == 0 && z == 1) ||
+        (x == 0 && y == 0 && z == 2) || (x == 1 && y == 0 && z == 0) ||
+        (x == 1 && y == 0 && z == 1) || (x == 1 && y == 0 && z == 2) ||
+        (x == 2 && y == 0 && z == 0) || (x == 2 && y == 0 && z == 1) ||
+        (x == 2 && y == 0 && z == 2)) {
+      printf("bottom = tIdx: %d; x=%d; y=%d; z=%d\n", tIdx, x, y, z);
+    }
+
+    // sides
+    if ((x == 0 && y == 1 && z == 0) || (x == 0 && y == 1 && z == 1) ||
+        (x == 0 && y == 1 && z == 2) || (x == 1 && y == 1 && z == 0) ||
+        (x == 1 && y == 1 && z == 2) || (x == 2 && y == 1 && z == 0) ||
+        (x == 2 && y == 1 && z == 1) || (x == 2 && y == 1 && z == 2)) {
+      printf("sides = tIdx: %d; x=%d; y=%d; z=%d\n", tIdx, x, y, z);
+    }
+  }
+
+  printf("foo");
 
   Matrix *transforms = Arena_AllocAlignedZeroed(
-      &arena, CUBE_COUNT * sizeof(Matrix), DEFAULT_MATRIX_ALIGNMENT);
+      &arena, testCubeCount * sizeof(Matrix), DEFAULT_MATRIX_ALIGNMENT);
 
   Shader shader = LoadShader("resources/shaders/lighting_instancing.vs",
                              "resources/shaders/lighting.fs");
@@ -312,28 +433,24 @@ void can_specify_neighbour_indexes() {
 
     BeginMode3D(camera);
 
-    for (int tIdx = 0; tIdx < CUBE_COUNT; tIdx++) {
-      bool is_alive = c3d.is_alive[tIdx];
+    for (int tIdx = 0; tIdx < testCubeCount; tIdx++) {
       int x = c3d.positionsX[tIdx];
       int y = c3d.positionsY[tIdx];
       int z = c3d.positionsZ[tIdx];
 
-      if (is_alive) {
-        Matrix translation = MatrixTranslate(x, y, z);
-        // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
+      Matrix translation = MatrixTranslate(x, y, z);
 
-        // TODO: Finish the test
-        transforms[tIdx] = translation;
-      }
+      transforms[tIdx] = translation;
+      // }
     }
-
-    DrawMeshInstanced(cube, matInstances, transforms, CUBE_COUNT);
+    DrawMeshInstanced(cube, matInstances, transforms, testCubeCount);
 
     DrawGrid(100, 1.0F);
 
     EndMode3D();
     EndDrawing();
   }
+
   CloseWindow();
 }
 

@@ -21,6 +21,7 @@ typedef enum Cells3DParams {
   MAX_CUBES_Y = 16,
   MAX_CUBES_Z = 16,
   CUBE_COUNT = MAX_CUBES_X * MAX_CUBES_Y * MAX_CUBES_Z,
+  CUBE_INITIAL_GRID_DENSITY = 16,
   // the 3D Moore neighbourhood consits of the 26 neighbouring cubes
   TOP_NEIGHBOUR_SIZE = 9,
   BOTTOM_NEIGHBOUR_SIZE = 9,
@@ -68,6 +69,8 @@ typedef struct Cells3D {
   int *positionsX;
   int *positionsY;
   int *positionsZ;
+
+  int aliveCells;
 } Cells3D;
 
 void Cells2D_InitArraysBasedOnCellSize(Arena *genArena, Cells2D *c2d);

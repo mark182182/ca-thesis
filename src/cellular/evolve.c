@@ -29,8 +29,11 @@ void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive) {
     for (int y = 0; y < MAX_CUBES_Y; y = y + CUBE_SIZE) {
       for (int z = 0; z < MAX_CUBES_Z; z = z + CUBE_SIZE) {
         if (randomizeAlive) {
-          bool is_alive = rand() % CELL_INITIAL_GRID_DENSITY == 0;
+          bool is_alive = rand() % CUBE_INITIAL_GRID_DENSITY == 0;
           c3d->is_alive[i] = is_alive;
+          if (is_alive) {
+            c3d->aliveCells++;
+          }
         } else {
           c3d->is_alive[i] = 0;
         }
@@ -115,10 +118,12 @@ void EvolveGOL3D_NextGeneration(Cells3D *outC3d, const Cells3D *inC3d) {
     if (neighbours < UNDERPOPULATION_UPPER_CAP_3D ||
         neighbours > OVERPOPULATION_UPPER_CAP_3D) {
       outC3d->is_alive[i] = false;
+      outC3d->aliveCells--;
       // reproduction
     } else if (!inC3d->is_alive[i] &&
                neighbours == OVERPOPULATION_UPPER_CAP_3D) {
       outC3d->is_alive[i] = true;
+      outC3d->aliveCells++;
     }
   }
 }
@@ -153,4 +158,6 @@ int __GOL3DCheckNeighbours(Cells3D *inC2d, int i) {
       neighbours++;
     }
   }
+
+  return neighbours;
 }

@@ -9,10 +9,7 @@
 extern bool shouldClose;
 
 // forward declarations to prevent cyclic includes
-struct Render2D;
 typedef struct Render2D Render2D;
-
-struct Render3D;
 typedef struct Render3D Render3D;
 
 /**
@@ -39,6 +36,7 @@ typedef struct Render {
   bool isPaused;
   bool isDebugOn;
   bool isModeFirstFrame;
+  bool isMouseRestricted;
 } Render;
 
 void Render_RenderWindow(Render *render);

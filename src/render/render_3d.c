@@ -91,7 +91,7 @@ Render3D Render3D_Init(Render *render) {
   Render3D render3d = {.camera = camera,
                        .cube = cube,
                        .matInstances = matInstances,
-                       .render3DSpeed = 0.2f,
+                       .render3DSpeed = 1.84f,
                        .transforms = transforms};
   return render3d;
 }
@@ -107,6 +107,23 @@ void Render3D_RenderMode(Render *render) {
     Evolve3D_InitializeCells(&render->render3d->firstC3d, true);
     Evolve3D_InitializeCells(&render->render3d->secondC3d, false);
   }
+
+  if (render->deltaTime >= render->render3d->render3DSpeed) {
+
+    if (currentGeneration != 0 && currentGeneration % 2 == 0) {
+      EvolveGOL3D_NextGeneration(&render->render3d->firstC3d,
+                                 &render->render3d->secondC3d);
+    } else {
+      EvolveGOL3D_NextGeneration(&render->render3d->secondC3d,
+                                 &render->render3d->firstC3d);
+    }
+    currentGeneration++;
+    render->deltaTime = 0;
+  }
+  render->deltaTime += GetFrameTime();
+
+  Cells3D actualCd = currentGeneration % 2 == 0 ? render->render3d->secondC3d
+                                                : render->render3d->firstC3d;
 
   UpdateCamera(&render->render3d->camera, CAMERA_FREE);
   float cameraPos[3] = {render->render3d->camera.position.x,
@@ -124,21 +141,6 @@ void Render3D_RenderMode(Render *render) {
                  &render->deltaTime, SHADER_UNIFORM_FLOAT);
   // TOOD: update the light shader here, if needed
 
-  // TODO: invoke evolve next gen here
-  if (!render->isModeFirstFrame) {
-    if (currentGeneration % 2 == 0) {
-      EvolveGOL3D_NextGeneration(&render->render3d->firstC3d,
-                                 &render->render3d->secondC3d);
-    } else {
-      EvolveGOL3D_NextGeneration(&render->render3d->secondC3d,
-                                 &render->render3d->firstC3d);
-    }
-  }
-  currentGeneration++;
-
-  Cells3D actualCd = currentGeneration % 2 == 0 ? render->render3d->secondC3d
-                                                : render->render3d->firstC3d;
-
   for (int tIdx = 0; tIdx < CUBE_COUNT; tIdx++) {
     bool is_alive = actualCd.is_alive[tIdx];
     int x = actualCd.positionsX[tIdx];
@@ -152,6 +154,7 @@ void Render3D_RenderMode(Render *render) {
       render->render3d->transforms[tIdx] = translation;
     }
   }
+  printf("aliveCells: %d\n", actualCd.aliveCells);
   // printf("\nDrawn %d cubes\n", tIdx + 1);
 
   Render_BeginDrawing();
@@ -162,17 +165,12 @@ void Render3D_RenderMode(Render *render) {
   // throw error code 1281
   DrawMeshInstanced(render->render3d->cube, render->render3d->matInstances,
                     render->render3d->transforms, CUBE_COUNT);
-  // TODO: DO NOT CALLOC AND FREE IN ALL FRAMES!
-  // Would need to only free this once, when the mode changes
-  // RL_FREE(render->render3d->transforms);
 
   Render_LogGlError();
 
   DrawGrid(100, 1.0f);
 
   EndMode3D();
-
-  render->deltaTime += GetFrameTime();
 
   Arena_Free(render->frame3DArena);
 }

@@ -31,15 +31,15 @@ const int ADJECENT_INDEXES_2D[] = {-1, +1, (-1 * CELL_HEIGHT_SIZE),
 /*
  * Top 9 cubes that are above the current one
  */
-const int TOP_INDEXES_3D[] = {};
+const int TOP_INDEXES_3D[] = {-7, -6, -5, 2, 3, 4, 11, 12, 13};
 /*
  * Bottom 9 cubes that are below the current one
  */
-const int BOTTOM_INDEXES_3D[] = {};
+const int BOTTOM_INDEXES_3D[] = {-13, -12, -11, -4, -3, -2, 5, 6, 7};
 /*
  * The 8 cubes that alongside the current cube's height
  */
-const int SIDE_INDEXES_3D[] = {};
+const int SIDE_INDEXES_3D[] = {-10, -9, -8, -1, 1, 8, 9, 10};
 
 void Cells2D_InitArraysBasedOnCellSize(Arena *arena, Cells2D *c2d) {
   c2d->is_alive = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(bool),

@@ -16,6 +16,8 @@ bool shouldClose = false;
 
 void Render_RenderWindow(Render *render) {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "CA Renderer");
+  SetWindowFocused();
+
   // must be called after InitWindow
   Menu menu = Menu_Init();
 
@@ -25,7 +27,7 @@ void Render_RenderWindow(Render *render) {
 
   while (!shouldClose) {
     render->charPressed = GetCharPressed();
-    Menu_Update(render->menu);
+    Menu_Update(render);
 
     if (render->fpsCap == 60 && render->charPressed == 'c') {
       render->fpsCap = 0;
@@ -107,7 +109,7 @@ void Render_RenderWindow(Render *render) {
     }
 
     if (menu.isVisible) {
-      Menu_Draw(&menu);
+      Menu_Draw(render);
     }
 
     if (IsKeyPressed(KEY_TAB)) {
@@ -115,10 +117,21 @@ void Render_RenderWindow(Render *render) {
     }
 
     if (render->isDebugOn) {
-      Menu_DrawDebug(&menu);
+      Menu_DrawDebug(render);
     }
 
     EndDrawing();
+
+    if (render->isMouseRestricted) {
+      // NOTE: restricting the mouse to a specific square, so the user can turn around in 3D, but cannot go over the limit, which prevents the mouse going out of the screen
+      Vector2 mousePos = GetMousePosition();
+      if (mousePos.x >= (SCREEN_WIDTH / 2) + 128 ||
+          (mousePos.x <= (SCREEN_WIDTH / 2) - 128 ||
+           (mousePos.y >= (SCREEN_HEIGHT / 2) + 128) ||
+           (mousePos.y <= (SCREEN_HEIGHT / 2) - 128))) {
+        SetMousePosition(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+      }
+    }
   }
 
   // teardown the objects after the window has been closed

@@ -70,14 +70,12 @@ void Render2D_RenderMode(Render *render) {
 
   if (render->isPaused == 0 && render->deltaTime >= render2d->render2DSpeed) {
     clock_t time = clock();
-    if (currentGeneration != 0) {
+    if (currentGeneration != 0 && currentGeneration % 2 == 0) {
       // TODO: The display is weird, somehow the display of the cells doesn't
       // match up with the state
-      if (currentGeneration % 2 == 0) {
-        EvolveGOL2D_NextGeneration(&render2d->firstC2d, &render2d->secondC2d);
-      } else {
-        EvolveGOL2D_NextGeneration(&render2d->secondC2d, &render2d->firstC2d);
-      }
+      EvolveGOL2D_NextGeneration(&render2d->firstC2d, &render2d->secondC2d);
+    } else {
+      EvolveGOL2D_NextGeneration(&render2d->secondC2d, &render2d->firstC2d);
     }
     currentGeneration++;
     render->deltaTime = 0;
