@@ -17,8 +17,8 @@ Render3D Render3D_Init(Render *render) {
 
   Arena frame3DArena =
       Arena_Init("frame3DArena", &frame3DArenaStorage, FRAME_3D_STORAGE_SIZE);
-  render->mode3DArena = &mode3DArena;
-  render->frame3DArena = &frame3DArena;
+  render->mode3DArena = mode3DArena;
+  render->frame3DArena = frame3DArena;
 
   Camera3D camera = {0};
   // TODO: adjust these
@@ -31,8 +31,9 @@ Render3D Render3D_Init(Render *render) {
   Mesh cube = GenMeshCube(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
 
   // transforms to be uploaded to GPU for instances
-  Matrix *transforms = Arena_AllocAlignedZeroed(
-      &mode3DArena, CUBE_COUNT * sizeof(Matrix), DEFAULT_MATRIX_ALIGNMENT);
+  Matrix *transforms = Arena_AllocAlignedZeroed(&render->frame3DArena,
+                                                CUBE_COUNT * sizeof(Matrix),
+                                                DEFAULT_MATRIX_ALIGNMENT);
 
   Shader shader = LoadShader("resources/shaders/lighting_instancing.vs",
                              "resources/shaders/lighting.fs");
@@ -91,17 +92,20 @@ Render3D Render3D_Init(Render *render) {
   Render3D render3d = {.camera = camera,
                        .cube = cube,
                        .matInstances = matInstances,
-                       .render3DSpeed = 1.84f,
+                       .render3DSpeed = 1.4f,
                        .transforms = transforms};
   return render3d;
 }
 
+// TODO: figure out why the rendering doesn't work properly, the dead cells
+// should not be drawn to the screen
+
 void Render3D_RenderMode(Render *render) {
   if (render->isModeFirstFrame) {
     printf("Entering 3D mode");
-    Cells3D_InitArraysBasedOnCellSize(render->mode3DArena,
+    Cells3D_InitArraysBasedOnCellSize(&render->mode3DArena,
                                       &render->render3d->firstC3d);
-    Cells3D_InitArraysBasedOnCellSize(render->mode3DArena,
+    Cells3D_InitArraysBasedOnCellSize(&render->mode3DArena,
                                       &render->render3d->secondC3d);
 
     Evolve3D_InitializeCells(&render->render3d->firstC3d, true);
@@ -122,8 +126,8 @@ void Render3D_RenderMode(Render *render) {
   }
   render->deltaTime += GetFrameTime();
 
-  Cells3D actualCd = currentGeneration % 2 == 0 ? render->render3d->secondC3d
-                                                : render->render3d->firstC3d;
+  Cells3D *actualCd = currentGeneration % 2 == 0 ? &render->render3d->secondC3d
+                                                 : &render->render3d->firstC3d;
 
   UpdateCamera(&render->render3d->camera, CAMERA_FREE);
   float cameraPos[3] = {render->render3d->camera.position.x,
@@ -141,20 +145,32 @@ void Render3D_RenderMode(Render *render) {
                  &render->deltaTime, SHADER_UNIFORM_FLOAT);
   // TOOD: update the light shader here, if needed
 
+  actualCd->aliveCells = 0;
   for (int tIdx = 0; tIdx < CUBE_COUNT; tIdx++) {
-    bool is_alive = actualCd.is_alive[tIdx];
-    int x = actualCd.positionsX[tIdx];
-    int y = actualCd.positionsY[tIdx];
-    int z = actualCd.positionsZ[tIdx];
+    bool is_alive = actualCd->is_alive[tIdx];
+    int x = actualCd->positionsX[tIdx];
+    int y = actualCd->positionsY[tIdx];
+    int z = actualCd->positionsZ[tIdx];
 
+    // since the arena is reset on every frame, we can just set the alive cells
     if (is_alive) {
+      actualCd->aliveCells++;
       Matrix translation = MatrixTranslate(x, y, z);
       // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
 
-      render->render3d->transforms[tIdx] = translation;
+      // TODO: Revise this
+      Matrix scale = MatrixScale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
+
+      // with no gaps between the cubes
+      // Matrix mul = MatrixMultiply(translation, scale);
+      // with gaps
+      Matrix mul = MatrixMultiply(scale, translation);
+
+      render->render3d->transforms[tIdx] = mul;
     }
   }
-  printf("aliveCells: %d\n", actualCd.aliveCells);
+
+  printf("aliveCells: %d\n", actualCd->aliveCells);
   // printf("\nDrawn %d cubes\n", tIdx + 1);
 
   Render_BeginDrawing();
@@ -172,7 +188,7 @@ void Render3D_RenderMode(Render *render) {
 
   EndMode3D();
 
-  Arena_Free(render->frame3DArena);
+  Arena_FreeZeroed(&render->frame3DArena);
 }
 
 // void Render3D_Teardown() {

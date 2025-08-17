@@ -31,9 +31,6 @@ void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive) {
         if (randomizeAlive) {
           bool is_alive = rand() % CUBE_INITIAL_GRID_DENSITY == 0;
           c3d->is_alive[i] = is_alive;
-          if (is_alive) {
-            c3d->aliveCells++;
-          }
         } else {
           c3d->is_alive[i] = 0;
         }
@@ -53,14 +50,16 @@ void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive) {
 void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d) {
   for (int i = 0; i < CELL_COUNT; i++) {
     int neighbours = __GOL2DCheckNeighbours(inC2d, i);
-    // under or overpopulation
-    if (neighbours < UNDERPOPULATION_UPPER_CAP_2D ||
-        neighbours > OVERPOPULATION_UPPER_CAP_2D) {
-      outC2d->is_alive[i] = false;
+    bool isAlive = inC2d->is_alive[i];
+
+    if (isAlive) {
+      // under or overpopulation when < underpop && > overpop
+      // lives on when == underpop && == overpop
+      outC2d->is_alive[i] = neighbours >= UNDERPOPULATION_UPPER_CAP_2D &&
+                            neighbours <= OVERPOPULATION_UPPER_CAP_2D;
+    } else {
       // reproduction
-    } else if (!inC2d->is_alive[i] &&
-               neighbours == OVERPOPULATION_UPPER_CAP_2D) {
-      outC2d->is_alive[i] = true;
+      outC2d->is_alive[i] = neighbours == OVERPOPULATION_UPPER_CAP_2D;
     }
   }
 }
@@ -112,52 +111,83 @@ int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
 
 // TODO: It should receive the exact ruleset as well (e.g. R(4555) or R(5766))
 void EvolveGOL3D_NextGeneration(Cells3D *outC3d, const Cells3D *inC3d) {
-  for (int i = 0; i < CELL_COUNT; i++) {
+  for (int i = 0; i < CUBE_COUNT; i++) {
     int neighbours = __GOL3DCheckNeighbours(inC3d, i);
-    // under or overpopulation
-    if (neighbours < UNDERPOPULATION_UPPER_CAP_3D ||
-        neighbours > OVERPOPULATION_UPPER_CAP_3D) {
-      outC3d->is_alive[i] = false;
-      outC3d->aliveCells--;
+    bool isCurrentAlive = inC3d->is_alive[i];
+
+    if (isCurrentAlive) {
+      // under or overpopulation when < underpop && > overpop
+      // lives on when == underpop && == overpop
+      outC3d->is_alive[i] = neighbours >= UNDERPOPULATION_UPPER_CAP_3D &&
+                            neighbours <= OVERPOPULATION_UPPER_CAP_3D;
+    } else {
       // reproduction
-    } else if (!inC3d->is_alive[i] &&
-               neighbours == OVERPOPULATION_UPPER_CAP_3D) {
-      outC3d->is_alive[i] = true;
-      outC3d->aliveCells++;
+      outC3d->is_alive[i] = neighbours == OVERPOPULATION_UPPER_CAP_3D;
     }
   }
 }
 
-int __GOL3DCheckNeighbours(Cells3D *inC2d, int i) {
+int __GOL3DCheckNeighbours(Cells3D *inC3d, int i) {
+  // TODO: finish this
+
+  // TODO: use Cells_CalcNeighbourOffsets3D instead
+  int offsets[26];
+  int idx = 0;
+
+  for (int dy = -1; dy <= 1; dy++) {
+    for (int dx = -1; dx <= 1; dx++) {
+      for (int dz = -1; dz <= 1; dz++) {
+        if (dx == 0 && dy == 0 && dz == 0)
+          continue; // Skip self
+
+        // Calculate 1D offset directly
+        int offset = dy * (MAX_CUBES_X * MAX_CUBES_Z) + dx * MAX_CUBES_Z + dz;
+        offsets[idx++] = offset;
+      }
+    }
+  }
+
+  // calc neighbours
   int neighbours = 0;
-  int arraySize = (CUBE_COUNT - 1);
 
-  for (int j = 0; j < TOP_NEIGHBOUR_SIZE; j++) {
-    int relativeIdx = i + TOP_INDEXES_3D[j];
-    if (relativeIdx >= 0 && relativeIdx <= arraySize &&
-        inC2d->is_alive[relativeIdx]) {
-      // the cube at the top
+  for (int j = 0; j < 26; j++) {
+    int relativeIdx = i + offsets[j];
+    if (relativeIdx >= 0 && relativeIdx < CUBE_COUNT &&
+        inC3d->is_alive[relativeIdx]) {
       neighbours++;
     }
   }
 
-  for (int j = 0; j < BOTTOM_NEIGHBOUR_SIZE; j++) {
-    int relativeIdx = i + BOTTOM_INDEXES_3D[j];
-    if (relativeIdx >= 0 && relativeIdx <= arraySize &&
-        inC2d->is_alive[relativeIdx]) {
-      // the cube at the bottom
-      neighbours++;
-    }
-  }
+  return neighbours;
+  // int neighbours = 0;
+  // int arraySize = (CUBE_COUNT - 1);
 
-  for (int j = 0; j < SIDE_NEIGHBOUR_SIZE; j++) {
-    int relativeIdx = i + SIDE_INDEXES_3D[j];
-    if (relativeIdx >= 0 && relativeIdx <= arraySize &&
-        inC2d->is_alive[relativeIdx]) {
-      // the cube at the side
-      neighbours++;
-    }
-  }
+  // for (int j = 0; j < TOP_NEIGHBOUR_SIZE; j++) {
+  //   int relativeIdx = i + TOP_INDEXES_3D[j];
+  //   if (relativeIdx >= 0 && relativeIdx <= arraySize &&
+  //       inC3d->is_alive[relativeIdx]) {
+  //     // the cube at the top
+  //     neighbours++;
+  //   }
+  // }
+
+  // for (int j = 0; j < BOTTOM_NEIGHBOUR_SIZE; j++) {
+  //   int relativeIdx = i + BOTTOM_INDEXES_3D[j];
+  //   if (relativeIdx >= 0 && relativeIdx <= arraySize &&
+  //       inC3d->is_alive[relativeIdx]) {
+  //     // the cube at the bottom
+  //     neighbours++;
+  //   }
+  // }
+
+  // for (int j = 0; j < SIDE_NEIGHBOUR_SIZE; j++) {
+  //   int relativeIdx = i + SIDE_INDEXES_3D[j];
+  //   if (relativeIdx >= 0 && relativeIdx <= arraySize &&
+  //       inC3d->is_alive[relativeIdx]) {
+  //     // the cube at the side
+  //     neighbours++;
+  //   }
+  // }
 
   return neighbours;
 }

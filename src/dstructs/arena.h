@@ -25,7 +25,7 @@ static const size_t MODE_2D_STORAGE_SIZE = 512 * 1024;
 static const size_t MODE_3D_STORAGE_SIZE = 16 * 1024 * 1024;
 
 // NOTE: initial estimate without measurement, increase as needed
-static const size_t FRAME_3D_STORAGE_SIZE = 8 * 1024;
+static const size_t FRAME_3D_STORAGE_SIZE = 16 * 1024 * 1024;
 static const size_t FRAME_2D_STORAGE_SIZE = 8 * 1024 * 1024; // 8 MB
 
 // backing memory storages for the arenas in bytes
@@ -97,6 +97,10 @@ extern inline void *Arena_AllocAligned(Arena *arena, size_t size,
                                        size_t alignment);
 extern inline void *Arena_AllocAlignedZeroed(Arena *arena, size_t size,
                                              size_t alignment);
+
+static inline void *__Arena_Alloc(Arena *arena, size_t size, size_t alignment,
+                                  bool shouldZeroOut);
+
 // frees all of the allocated memory at once
 extern inline void Arena_Free(Arena *arena);
 extern inline void Arena_FreeZeroed(Arena *arena);

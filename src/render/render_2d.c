@@ -16,8 +16,8 @@ Render2D Render2D_Init(Render *render) {
       Arena_Init("modeArena", &mode2DArenaStorage, MODE_2D_STORAGE_SIZE);
   Arena frame2DArena =
       Arena_Init("frame2DArena", &frame2DArenaStorage, FRAME_2D_STORAGE_SIZE);
-  render->mode2DArena = &mode2DArena;
-  render->frame2DArena = &frame2DArena;
+  render->mode2DArena = mode2DArena;
+  render->frame2DArena = frame2DArena;
 
   Camera2D camera = {0};
   camera.zoom = 1.0f;
@@ -35,13 +35,14 @@ void Render2D_RenderMode(Render *render) {
 
   if (render->isModeFirstFrame) {
     printf("Entering 2D mode");
-    Cells2D_InitArraysBasedOnCellSize(render->mode2DArena, &render2d->firstC2d);
-    Cells2D_InitArraysBasedOnCellSize(render->mode2DArena,
+    Cells2D_InitArraysBasedOnCellSize(&render->mode2DArena,
+                                      &render2d->firstC2d);
+    Cells2D_InitArraysBasedOnCellSize(&render->mode2DArena,
                                       &render2d->secondC2d);
 
     // TODO: Randomization should only be set, if the user clicks on the button
     // or similar
-    Evolve2D_InitializeCells(&render2d->firstC2d, false);
+    Evolve2D_InitializeCells(&render2d->firstC2d, true);
     Evolve2D_InitializeCells(&render2d->secondC2d, false);
   }
 
@@ -82,8 +83,8 @@ void Render2D_RenderMode(Render *render) {
   }
   render->deltaTime += GetFrameTime();
 
-  Cells2D actualCd =
-      currentGeneration % 2 == 0 ? render2d->secondC2d : render2d->firstC2d;
+  Cells2D *actualCd =
+      currentGeneration % 2 == 0 ? &render2d->secondC2d : &render2d->firstC2d;
 
   // update variables here
 
@@ -93,12 +94,12 @@ void Render2D_RenderMode(Render *render) {
 
   // TODO: This should be drawn in a single call
   for (int i = 0; i < CELL_COUNT; i++) {
-    Color color = *actualCd.colors[i];
+    Color color = *actualCd->colors[i];
     // TODO: Revise this, just an example
     Rectangle rect = {.height = CELL_HEIGHT_RATIO,
                       .width = CELL_WIDTH_RATIO,
-                      .x = actualCd.positionsX[i],
-                      .y = actualCd.positionsY[i]};
+                      .x = actualCd->positionsX[i],
+                      .y = actualCd->positionsY[i]};
     if (CheckCollisionPointRec(GetMousePosition(), rect)) {
       Vector2 position = {.x = 100, .y = 200};
       char posText[32];
@@ -111,15 +112,15 @@ void Render2D_RenderMode(Render *render) {
 
       // TODO: Make sure the user can set the current cell's alive state
       if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-        actualCd.is_alive[i] = !actualCd.is_alive[i];
+        actualCd->is_alive[i] = !actualCd->is_alive[i];
       }
     }
 
-    if (actualCd.is_alive[i]) {
-      DrawRectangle(actualCd.positionsX[i], actualCd.positionsY[i],
+    if (actualCd->is_alive[i]) {
+      DrawRectangle(actualCd->positionsX[i], actualCd->positionsY[i],
                     CELL_HEIGHT_RATIO, CELL_WIDTH_RATIO, color);
     } else if (color.a == YELLOW.a && color.b == YELLOW.b) {
-      DrawRectangle(actualCd.positionsX[i], actualCd.positionsY[i],
+      DrawRectangle(actualCd->positionsX[i], actualCd->positionsY[i],
                     CELL_HEIGHT_RATIO, CELL_WIDTH_RATIO, color);
     }
   }
@@ -150,7 +151,7 @@ void Render2D_RenderMode(Render *render) {
   // }
 
   // free objects after each frame
-  Arena_Free(render->frame2DArena);
+  Arena_Free(&render->frame2DArena);
 
   // TODO: Check, if the mode changed, then free the modeArena
 }

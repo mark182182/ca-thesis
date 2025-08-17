@@ -301,7 +301,7 @@ void can_specify_neighbour_indexes() {
     Bottom indexes to find: x=0,1,2; y=0; z=0,1,2
     Side indexes to find: x=0,1,2 y=1; z=0,1,2, where x != 1 && y != 1 && z !=1
 
-    c = tIdx: 13; x=1; y=1; z=1
+    c = tIdx: 13; x=1; y=1; z=1, cIdx = c.tIdx
 
     bottom = tIdx: 0; x=0; y=0; z=0
     bottom = tIdx: 1; x=0; y=0; z=1
@@ -331,7 +331,7 @@ void can_specify_neighbour_indexes() {
     sides = tIdx: 23; x=2; y=1; z=2
 
     neighbour tIdx  relativeIdx
-    bottom  0 -13
+    bottom  0 -13, to get this we need to cIdx
     bottom  1 -12
     bottom  2 -11
     bottom  9 -4

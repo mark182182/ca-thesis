@@ -17,10 +17,10 @@ typedef struct Render3D Render3D;
  * menu gets drawn. Also used for selecting the other render modes via the menu.
  */
 typedef struct Render {
-  Arena *mode2DArena;
-  Arena *mode3DArena;
-  Arena *frame2DArena;
-  Arena *frame3DArena;
+  Arena mode2DArena;
+  Arena mode3DArena;
+  Arena frame2DArena;
+  Arena frame3DArena;
 
   Menu *menu;
 

@@ -49,24 +49,20 @@ void Render_RenderWindow(Render *render) {
       // whenever we switch modes, we free everything
       render->isModeFirstFrame = true;
 
-      if (render->mode2DArena != NULL) {
-        Arena_FreeZeroed(render->mode2DArena);
-        render->mode2DArena = NULL;
+      if (render->mode2DArena.used > 0) {
+        Arena_FreeZeroed(&render->mode2DArena);
       }
 
-      if (render->frame2DArena != NULL) {
-        Arena_FreeZeroed(render->frame2DArena);
-        render->frame2DArena = NULL;
+      if (render->frame2DArena.used > 0) {
+        Arena_FreeZeroed(&render->frame2DArena);
       }
 
-      if (render->mode3DArena != NULL) {
-        Arena_FreeZeroed(render->mode3DArena);
-        render->mode3DArena = NULL;
+      if (render->mode3DArena.used > 0) {
+        Arena_FreeZeroed(&render->mode3DArena);
       }
 
-      if (render->frame3DArena != NULL) {
-        Arena_FreeZeroed(render->frame3DArena);
-        render->frame3DArena = NULL;
+      if (render->frame3DArena.used > 0) {
+        Arena_FreeZeroed(&render->frame3DArena);
       }
 
       menu.prevMode = menu.currentMode;
@@ -123,7 +119,9 @@ void Render_RenderWindow(Render *render) {
     EndDrawing();
 
     if (render->isMouseRestricted) {
-      // NOTE: restricting the mouse to a specific square, so the user can turn around in 3D, but cannot go over the limit, which prevents the mouse going out of the screen
+      // NOTE: restricting the mouse to a specific square, so the user can turn
+      // around in 3D, but cannot go over the limit, which prevents the mouse
+      // going out of the screen
       Vector2 mousePos = GetMousePosition();
       if (mousePos.x >= (SCREEN_WIDTH / 2) + 128 ||
           (mousePos.x <= (SCREEN_WIDTH / 2) - 128 ||

@@ -21,22 +21,35 @@ typedef enum Cells3DParams {
   MAX_CUBES_Y = 16,
   MAX_CUBES_Z = 16,
   CUBE_COUNT = MAX_CUBES_X * MAX_CUBES_Y * MAX_CUBES_Z,
-  CUBE_INITIAL_GRID_DENSITY = 16,
+  CUBE_INITIAL_GRID_DENSITY = 4,
   // the 3D Moore neighbourhood consits of the 26 neighbouring cubes
+  CUBE_NEIGHBOUR_SIZE = 26,
+  // TODO: use CUBE_NEIGHBOUR_SIZE instead
   TOP_NEIGHBOUR_SIZE = 9,
   BOTTOM_NEIGHBOUR_SIZE = 9,
   SIDE_NEIGHBOUR_SIZE = 8
 } Cells3DParams;
 
 extern float CUBE_SIZE;
+extern float CUBE_SCALE;
 
-// Moore neighborhood
+// Moore neighbourhood
+// TODO: use the revised CalcNeighbourOffsets solution with NEIGHBOUR_INDEXES_2D
 extern const int DIAGONAL_INDEXES_2D[];
 extern const int ADJECENT_INDEXES_2D[];
 
+extern const int NEIGHBOUR_INDEXES_2D[];
+
+// TODO: use the revised CalcNeighbourOffsets solution with NEIGHBOUR_INDEXES_3D
 extern const int TOP_INDEXES_3D[];
 extern const int BOTTOM_INDEXES_3D[];
 extern const int SIDE_INDEXES_3D[];
+
+extern const int NEIGHBOUR_INDEXES_3D[CUBE_NEIGHBOUR_SIZE];
+
+void Cells_CalcNeighbourOffsets2D();
+void Cells_CalcNeighbourOffsets3D(int *neighborsToFill, int maxCubesX,
+                                  int maxCubesY, int maxCubesZ);
 
 /*
  * SOA based container for cells to be drawn on the screen in 2D. The cells are
@@ -59,6 +72,8 @@ typedef struct Cells2D {
   int *positionsX;
   int *positionsY;
   Color **colors;
+
+  int aliveCells;
 } Cells2D;
 
 typedef struct Cells3D {
@@ -73,7 +88,7 @@ typedef struct Cells3D {
   int aliveCells;
 } Cells3D;
 
-void Cells2D_InitArraysBasedOnCellSize(Arena *genArena, Cells2D *c2d);
-void Cells3D_InitArraysBasedOnCellSize(Arena *genArena, Cells3D *c3d);
+void Cells2D_InitArraysBasedOnCellSize(Arena *arena, Cells2D *c2d);
+void Cells3D_InitArraysBasedOnCellSize(Arena *arena, Cells3D *c3d);
 
 #endif

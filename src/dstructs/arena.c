@@ -1,6 +1,8 @@
 #include "arena.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 static void __ExitWithMsg(char *msg) {
   fprintf(stderr, "Error: %s\n", msg);
@@ -29,7 +31,17 @@ Arena Arena_Init(char *name, uint8_t *memory, size_t capacity) {
   return arena;
 }
 
+inline void *Arena_AllocAlignedZeroed(Arena *arena, size_t size,
+                                      size_t alignment) {
+  return __Arena_Alloc(arena, size, alignment, true);
+}
+
 inline void *Arena_AllocAligned(Arena *arena, size_t size, size_t alignment) {
+  return __Arena_Alloc(arena, size, alignment, false);
+}
+
+inline void *__Arena_Alloc(Arena *arena, size_t size, size_t alignment,
+                           bool shouldZeroOut) {
   // TODO: debug allocations, if DEBUG_MODE is enabled
   // printf_s("\nCurrent size to allocate: %zu\n", size);
   // printf_s("\nCurrent used: %zu\n", arena->used);
@@ -45,23 +57,18 @@ inline void *Arena_AllocAligned(Arena *arena, size_t size, size_t alignment) {
   size_t newUsedSize = arena->used + paddingSize + size;
 
   if (newUsedSize > arena->capacity) {
-    printf_s("Allocation would be over the limit");
+  printf_s("Allocation would be over the limit");
     printf_s("\nWanted newUsedSize: %zu\n", newUsedSize);
     __ExitWithArenaMsg(arena,
                        "Cannot allocate memory, arena would be over capacity");
   }
 
+  if (shouldZeroOut && arena->memory != NULL) {
+    memset((void *)alignedAddr, 0, newUsedSize);
+  }
+
   arena->used = newUsedSize;
   return (void *)alignedAddr;
-}
-
-inline void *Arena_AllocAlignedZeroed(Arena *arena, size_t size,
-                                      size_t alignment) {
-  void *ptr = Arena_AllocAligned(arena, size, alignment);
-  if (ptr != NULL) {
-    memset(ptr, 0, size);
-  }
-  return ptr;
 }
 
 /*

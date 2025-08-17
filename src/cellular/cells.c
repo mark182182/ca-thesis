@@ -10,7 +10,9 @@
 #include <assert.h>
 #include <stdbool.h>
 
-float CUBE_SIZE = 1.0f; // 12 uniformly sized edges
+float CUBE_SIZE = 1.0F;  // 12 uniformly sized edges
+float CUBE_SCALE = 0.5F; // scale size for the default Raylib mesh to be used in
+                         // a scaling matrix
 
 /*
  * Diagonals relative to the current cell, e.g. if the ratio is 10:
@@ -40,6 +42,34 @@ const int BOTTOM_INDEXES_3D[] = {-13, -12, -11, -4, -3, -2, 5, 6, 7};
  * The 8 cubes that alongside the current cube's height
  */
 const int SIDE_INDEXES_3D[] = {-10, -9, -8, -1, 1, 8, 9, 10};
+
+void Cells_CalcNeighbourOffsets2D() {
+  // TODO: finish this
+}
+
+void Cells_CalcNeighbourOffsets3D(int *neighborsToFill, int maxCubesX,
+                                  int maxCubesY, int maxCubesZ) {
+  // calc offsets
+  int idx = 0;
+
+  for (int x = -1; x <= 1; x++) {
+    for (int y = -1; y <= 1; y++) {
+      for (int z = -1; z <= 1; z++) {
+        if (x == 0 && y == 0 && z == 0) {
+          continue; // ignore self from neighbour offsets
+        }
+
+        // formula=xOffset*MAX_Y*MAX_Z+yOffset*MAX_Z+zOffset
+        int offset = x * MAX_CUBES_Y * MAX_CUBES_Z // the current offset in x
+                     + y * MAX_CUBES_Z             // the current offset in y
+                     + z;                          // remaining z offset
+
+        // Calculate 1D offset directly
+        neighborsToFill[idx++] = offset;
+      }
+    }
+  }
+}
 
 void Cells2D_InitArraysBasedOnCellSize(Arena *arena, Cells2D *c2d) {
   c2d->is_alive = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(bool),
