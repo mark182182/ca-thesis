@@ -23,10 +23,10 @@ typedef enum Evolve2DParams {
 // TODO: hard-coded rule 4555 would need to be changed to use dynamic rulesets
 // instead
 typedef enum Evolve3DParams {
-  UNDERPOPULATION_UPPER_CAP_3D = 4,
-  OVERPOPULATION_UPPER_CAP_3D = 5
-  //  UNDERPOPULATION_UPPER_CAP_3D = 2,
-  //  OVERPOPULATION_UPPER_CAP_3D = 3
+  // UNDERPOPULATION_UPPER_CAP_3D = 4,
+  // OVERPOPULATION_UPPER_CAP_3D = 5
+   UNDERPOPULATION_UPPER_CAP_3D = 2,
+   OVERPOPULATION_UPPER_CAP_3D = 3
 } Evolve3DParams;
 
 /*

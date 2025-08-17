@@ -21,7 +21,6 @@ Render3D Render3D_Init(Render *render) {
   render->frame3DArena = frame3DArena;
 
   Camera3D camera = {0};
-  // TODO: adjust these
   camera.position = (Vector3){.x = 10.0f, .y = 10.0f, .z = 10.0f};
   camera.target = (Vector3){.x = 0.0f, .y = 0.0f, .z = 0.0f};
   camera.up = (Vector3){.x = 0.0f, .y = 1.0f, .z = 0.0f};
@@ -68,37 +67,16 @@ Render3D Render3D_Init(Render *render) {
   // TODO: optional: draw lines around the whole partitioned space, so the
   // bounds are clearly visible
 
-  /*
-  TODO: How to render 3D cellular automata:
-  - Would need some kind of partitioned space with clear bounds that can be used
-  to render the cubes into
-  - The size of a single cube in this partitioned space will be a single voxel,
-  the smallest element that can be differentiated in the space
-  - The number and placement of the voxels would then correspond to the initial
-  state of the cellular automata, much like in 2D
-  - Every generation would place the voxels into this partitioned space
-  according to the given rule, and only the given generation would be rendered,
-  much like in 2D
-  - Since we only partition the world into a single big octant that defines the
-  boundaries of what can be rendered within, it will only contain the different
-  voxels at one level deep.
-  - Based on the above, no complex structure, like an octree would need to be
-  implemented
-  - Much like in 2D, we can store the coordinates (x,y,z in this case) for the
-  vectors that point to the given voxel, so for checking the neighbours we only
-  have to check which voxel points to with vector
-  */
+  Cells_CalcNeighbourOffsets3D(&NEIGHBOUR_INDEXES_3D, MAX_CUBES_X, MAX_CUBES_Y,
+                               MAX_CUBES_Z);
 
   Render3D render3d = {.camera = camera,
                        .cube = cube,
                        .matInstances = matInstances,
-                       .render3DSpeed = 1.4f,
+                       .render3DSpeed = 0.4f,
                        .transforms = transforms};
   return render3d;
 }
-
-// TODO: figure out why the rendering doesn't work properly, the dead cells
-// should not be drawn to the screen
 
 void Render3D_RenderMode(Render *render) {
   if (render->isModeFirstFrame) {
@@ -158,7 +136,6 @@ void Render3D_RenderMode(Render *render) {
       Matrix translation = MatrixTranslate(x, y, z);
       // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
 
-      // TODO: Revise this
       Matrix scale = MatrixScale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
 
       // with no gaps between the cubes

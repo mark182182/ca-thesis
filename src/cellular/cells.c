@@ -30,18 +30,8 @@ const int DIAGONAL_INDEXES_2D[] = {(-1 * CELL_HEIGHT_SIZE) - 1,
  */
 const int ADJECENT_INDEXES_2D[] = {-1, +1, (-1 * CELL_HEIGHT_SIZE),
                                    CELL_HEIGHT_SIZE};
-/*
- * Top 9 cubes that are above the current one
- */
-const int TOP_INDEXES_3D[] = {-7, -6, -5, 2, 3, 4, 11, 12, 13};
-/*
- * Bottom 9 cubes that are below the current one
- */
-const int BOTTOM_INDEXES_3D[] = {-13, -12, -11, -4, -3, -2, 5, 6, 7};
-/*
- * The 8 cubes that alongside the current cube's height
- */
-const int SIDE_INDEXES_3D[] = {-10, -9, -8, -1, 1, 8, 9, 10};
+
+int NEIGHBOUR_INDEXES_3D[CUBE_NEIGHBOUR_SIZE];
 
 void Cells_CalcNeighbourOffsets2D() {
   // TODO: finish this
@@ -60,9 +50,9 @@ void Cells_CalcNeighbourOffsets3D(int *neighborsToFill, int maxCubesX,
         }
 
         // formula=xOffset*MAX_Y*MAX_Z+yOffset*MAX_Z+zOffset
-        int offset = x * MAX_CUBES_Y * MAX_CUBES_Z // the current offset in x
-                     + y * MAX_CUBES_Z             // the current offset in y
-                     + z;                          // remaining z offset
+        int offset = x * maxCubesY * maxCubesZ // the current offset in x
+                     + y * maxCubesZ           // the current offset in y
+                     + z;                      // remaining z offset
 
         // Calculate 1D offset directly
         neighborsToFill[idx++] = offset;

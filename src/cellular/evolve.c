@@ -71,7 +71,7 @@ void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d) {
  *
  * @return int: the number of neighbours
  */
-int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
+static int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
   int neighbours = 0;
   int arraySize = (CELL_COUNT - 1);
 
@@ -127,67 +127,16 @@ void EvolveGOL3D_NextGeneration(Cells3D *outC3d, const Cells3D *inC3d) {
   }
 }
 
-int __GOL3DCheckNeighbours(Cells3D *inC3d, int i) {
-  // TODO: finish this
-
-  // TODO: use Cells_CalcNeighbourOffsets3D instead
-  int offsets[26];
-  int idx = 0;
-
-  for (int dy = -1; dy <= 1; dy++) {
-    for (int dx = -1; dx <= 1; dx++) {
-      for (int dz = -1; dz <= 1; dz++) {
-        if (dx == 0 && dy == 0 && dz == 0)
-          continue; // Skip self
-
-        // Calculate 1D offset directly
-        int offset = dy * (MAX_CUBES_X * MAX_CUBES_Z) + dx * MAX_CUBES_Z + dz;
-        offsets[idx++] = offset;
-      }
-    }
-  }
-
-  // calc neighbours
+static int __GOL3DCheckNeighbours(Cells3D *inC3d, int i) {
   int neighbours = 0;
 
-  for (int j = 0; j < 26; j++) {
-    int relativeIdx = i + offsets[j];
+  for (int j = 0; j < CUBE_NEIGHBOUR_SIZE; j++) {
+    int relativeIdx = i + NEIGHBOUR_INDEXES_3D[j];
     if (relativeIdx >= 0 && relativeIdx < CUBE_COUNT &&
         inC3d->is_alive[relativeIdx]) {
       neighbours++;
     }
   }
-
-  return neighbours;
-  // int neighbours = 0;
-  // int arraySize = (CUBE_COUNT - 1);
-
-  // for (int j = 0; j < TOP_NEIGHBOUR_SIZE; j++) {
-  //   int relativeIdx = i + TOP_INDEXES_3D[j];
-  //   if (relativeIdx >= 0 && relativeIdx <= arraySize &&
-  //       inC3d->is_alive[relativeIdx]) {
-  //     // the cube at the top
-  //     neighbours++;
-  //   }
-  // }
-
-  // for (int j = 0; j < BOTTOM_NEIGHBOUR_SIZE; j++) {
-  //   int relativeIdx = i + BOTTOM_INDEXES_3D[j];
-  //   if (relativeIdx >= 0 && relativeIdx <= arraySize &&
-  //       inC3d->is_alive[relativeIdx]) {
-  //     // the cube at the bottom
-  //     neighbours++;
-  //   }
-  // }
-
-  // for (int j = 0; j < SIDE_NEIGHBOUR_SIZE; j++) {
-  //   int relativeIdx = i + SIDE_INDEXES_3D[j];
-  //   if (relativeIdx >= 0 && relativeIdx <= arraySize &&
-  //       inC3d->is_alive[relativeIdx]) {
-  //     // the cube at the side
-  //     neighbours++;
-  //   }
-  // }
 
   return neighbours;
 }
