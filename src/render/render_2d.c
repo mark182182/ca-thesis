@@ -30,12 +30,11 @@ Render2D Render2D_Init(Render *render) {
 }
 
 void Render2D_RenderMode(Render *render) {
-  Matrix foo;
   // initialize everything once
   Render2D *render2d = render->render2d;
 
   if (render->isModeFirstFrame) {
-    printf("Entering 2D mode");
+    printf("Rendering 2D mode\n");
     Cells2D_InitArraysBasedOnCellSize(&render->mode2DArena,
                                       &render2d->firstC2d);
     Cells2D_InitArraysBasedOnCellSize(&render->mode2DArena,
@@ -123,16 +122,6 @@ void Render2D_RenderMode(Render *render) {
                     CELL_HEIGHT_RATIO, CELL_WIDTH_RATIO, color);
     }
   }
-
-  // TODO: revise this, only an example
-  char *ruleText = "Current rule: Game of Life";
-  Vector2 textLength =
-      MeasureTextEx(render->menu->selectedFont, ruleText, FONT_SIZE, 0);
-
-  Vector2 position = {.x = SCREEN_WIDTH - textLength.x,
-                      .y = SCREEN_HEIGHT - textLength.y};
-  DrawTextEx(render->menu->selectedFont, ruleText, position, FONT_SIZE, 0,
-             TEXT_COLOR);
 
   EndMode2D();
 

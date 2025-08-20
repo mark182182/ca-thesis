@@ -44,16 +44,6 @@
 
 #endif
 
-#define Rectangle RaylibRectangle
-#define Vector2 RaylibVector2
-#define Vector3 RaylibVector3
-#define Vector4 RaylibVector4
-
-#define Camera3D RaylibCamera3D
-#define Mesh RaylibMesh
-#define Material RaylibMaterial
-#define Matrix RaylibMatrix
-
 #define CloseWindow RaylibCloseWindow
 #define ShowCursor RaylibShowCursor
 
@@ -64,7 +54,5 @@ static inline void RaylibShowCursor(void) { ShowCursor(); }
 
 #include <raylib.h>
 #include <raymath.h>
-
-typedef Color RaylibColor;
 
 #endif

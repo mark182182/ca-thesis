@@ -26,9 +26,12 @@ void Menu_Update(Render *render) {
 }
 
 void Menu_Draw(Render *render) {
-  uint8_t optionCount = 3;
-  Vector2 firstTextPos = {.x = (SCREEN_WIDTH / 2) - (FONT_SIZE * optionCount),
-                          .y = (SCREEN_HEIGHT / 2) - (FONT_SIZE * optionCount)};
+  // TODO: using 3 for better centering, but this should be calculated in
+  // another way to be perfectly centered
+  uint8_t centerRatio = 3;
+
+  Vector2 firstTextPos = {.x = (SCREEN_WIDTH / 2) - (FONT_SIZE * centerRatio),
+                          .y = (SCREEN_HEIGHT / 2) - (FONT_SIZE * centerRatio)};
   Vector2 longestTextLength = {.x = 0, .y = 0};
   Vector2 currentTextPos = {.x = firstTextPos.x, .y = firstTextPos.y};
 

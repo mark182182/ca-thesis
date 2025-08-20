@@ -28,9 +28,9 @@ extern const bool THREAD_DEFAULT_WAIT_FOR_ALL;
 extern const LPDWORD THREAD_DEFAULT_WAIT_MS;
 
 // raylib related defaults
-extern const RaylibColor RECT_COLOR;
-extern const RaylibColor TEXT_COLOR;
-extern const RaylibColor RANDOM_COLORS[24];
+extern const Color RECT_COLOR;
+extern const Color TEXT_COLOR;
+extern const Color RANDOM_COLORS[24];
 
 /**
  *  The lifetime of this arena is the lifetime of the renderer/application

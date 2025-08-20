@@ -15,12 +15,12 @@ extern const bool THREAD_DEFAULT_WAIT_FOR_ALL = true;
 extern const LPDWORD THREAD_DEFAULT_WAIT_MS = 1000;
 
 // raylib related defaults
-static const RaylibColor BLUISH_GREY =
-    CLITERAL(RaylibColor){105, 105, 130, 255};
+static const Color BLUISH_GREY =
+    CLITERAL(Color){105, 105, 130, 255};
 
-const RaylibColor RECT_COLOR = LIGHTGRAY;
-const RaylibColor TEXT_COLOR = BLUISH_GREY;
-const RaylibColor RANDOM_COLORS[24] = {
+const Color RECT_COLOR = LIGHTGRAY;
+const Color TEXT_COLOR = BLUISH_GREY;
+const Color RANDOM_COLORS[24] = {
     LIGHTGRAY, GRAY,   DARKGRAY, YELLOW,     GOLD,      ORANGE,  PINK,
     RED,       MAROON, GREEN,    LIME,       DARKGREEN, SKYBLUE, BLUE,
     DARKBLUE,  PURPLE, VIOLET,   DARKPURPLE, BEIGE,     BROWN,   DARKBROWN};

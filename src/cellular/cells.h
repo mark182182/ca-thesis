@@ -64,7 +64,7 @@ typedef struct Cells2D {
   bool *is_alive;
   int *positionsX;
   int *positionsY;
-  RaylibColor **colors;
+  Color **colors;
 
   int aliveCells;
 } Cells2D;

@@ -4,9 +4,9 @@
 #include "raylib_shim.h"
 
 typedef struct Light {
-  RaylibVector3 position;
-  RaylibVector3 target;
-  RaylibColor color;
+  Vector3 position;
+  Vector3 target;
+  Color color;
   // dimming of light over distance
   float attenuation;
 } Light;

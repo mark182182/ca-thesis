@@ -89,7 +89,7 @@ Render3D Render3D_Init(Render *render) {
 //                .attenuation = 1.0F};
 void Render3D_RenderMode(Render *render) {
   if (render->isModeFirstFrame) {
-    printf("Entering 3D mode");
+    printf("Rendering 3D mode\n");
     Cells3D_InitArraysBasedOnCellSize(&render->mode3DArena,
                                       &render->render3d->firstC3d);
     Cells3D_InitArraysBasedOnCellSize(&render->mode3DArena,

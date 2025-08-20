@@ -71,7 +71,7 @@ void Cells2D_InitArraysBasedOnCellSize(Arena *arena, Cells2D *c2d) {
   c2d->positionsY = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(int),
                                              DEFAULT_ARENA_ALIGNMENT);
 
-  c2d->colors = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(RaylibColor *),
+  c2d->colors = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(Color *),
                                          DEFAULT_ARENA_ALIGNMENT);
 }
 
