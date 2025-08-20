@@ -8,6 +8,7 @@
 #include "dstructs/arena.h"
 #include "cellular/cells.h"
 #include "cellular/evolve.h"
+#include "light.h"
 
 static int currentGeneration = 0;
 
@@ -78,6 +79,15 @@ Render3D Render3D_Init(Render *render) {
   return render3d;
 }
 
+//////////////////////////
+// TODO: it would be best to focus on user input now instead of lighting
+//////////////////////////
+
+// TODO: PoC for lighting
+// Light light = {.position = (Vector3){.x = 0.0F, .y = 0.0F, .z = 0.0F},
+//                .target = (Vector3){.x = 1.0F, .y = 1.0F, .z = 1.0F},
+//                .color = RED,
+//                .attenuation = 1.0F};
 void Render3D_RenderMode(Render *render) {
   if (render->isModeFirstFrame) {
     printf("Entering 3D mode");
@@ -101,6 +111,19 @@ void Render3D_RenderMode(Render *render) {
     }
     currentGeneration++;
     render->deltaTime = 0;
+
+    // // TODO: PoC for lighting
+    // if (light.position.x <= 0) {
+    //   light.position.x -= +10.0F;
+    // } else if (light.position.x >= 100.0F) {
+    //   light.position.x -= -10.0F;
+    // }
+
+    // if (light.position.x >= 70 && light.position.x <= 100) {
+    //   light.color = DARKGREEN;
+    // } else {
+    //   light.color = RED;
+    // }
   }
   render->deltaTime += GetFrameTime();
 
@@ -139,15 +162,17 @@ void Render3D_RenderMode(Render *render) {
       Matrix scale = MatrixScale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
 
       // with no gaps between the cubes
-      // Matrix mul = MatrixMultiply(translation, scale);
+      Matrix mul = MatrixMultiply(translation, scale);
       // with gaps
-      Matrix mul = MatrixMultiply(scale, translation);
+      // Matrix mul = MatrixMultiply(scale, translation);
 
       render->render3d->transforms[tIdx] = mul;
     }
   }
 
-  printf("aliveCells: %d\n", actualCd->aliveCells);
+
+  // TODO: draw this in the 3D menu instead
+  // printf("aliveCells: %d\n", actualCd->aliveCells);
   // printf("\nDrawn %d cubes\n", tIdx + 1);
 
   Render_BeginDrawing();

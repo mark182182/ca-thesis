@@ -17,9 +17,9 @@ typedef enum Cells2DParams {
 
 typedef enum Cells3DParams {
   // using power of 2 would be recommended
-  MAX_CUBES_X = 32,
-  MAX_CUBES_Y = 32,
-  MAX_CUBES_Z = 32,
+  MAX_CUBES_X = 16,
+  MAX_CUBES_Y = 16,
+  MAX_CUBES_Z = 16,
   CUBE_COUNT = MAX_CUBES_X * MAX_CUBES_Y * MAX_CUBES_Z,
   CUBE_INITIAL_GRID_DENSITY = 4,
   // the 3D Moore neighbourhood consits of the 26 neighbouring cubes
@@ -47,7 +47,7 @@ void Cells_CalcNeighbourOffsets3D(int *neighborsToFill, int maxCubesX,
  * SOA based container for cells to be drawn on the screen in 2D. The cells are
  * stored in height by width in one continous memory block, from top to bottom.
  *
- * NOTE: Whenever the fields change, the doubleGenStorage size has to
+ * NOTE: Whenever the fields change, the storage size has to
  * change as well (see formula in arena.h)
  *
  * The actual cell values (0 or 1) represent the populated/unpopulated cells.
@@ -73,9 +73,9 @@ typedef struct Cells3D {
   // doing with Cells2D, take a look at what instanced 3d rendering requires
   bool *is_alive;
   // NOTE: might want to use float here for the positions
-  double *positionsX;
-  double *positionsY;
-  double *positionsZ;
+  int *positionsX;
+  int *positionsY;
+  int *positionsZ;
 
   int aliveCells;
 } Cells3D;
