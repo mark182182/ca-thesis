@@ -121,7 +121,7 @@ void EvolveGOL3D_NextGeneration(Arena *frame3DArena, Cells3D *outC3d,
       frame3DArena, numOfProcessors * sizeof(Evolve3DThreadCells),
       DEFAULT_ARENA_ALIGNMENT);
 
-  int chunkSizePerThread = (CUBE_COUNT + numOfProcessors) / numOfProcessors;
+  int chunkSizePerThread = CUBE_COUNT / numOfProcessors;
 
   for (int i = 0; i < numOfProcessors; i++) {
     allThreadCells[i] = (Evolve3DThreadCells){
@@ -130,8 +130,10 @@ void EvolveGOL3D_NextGeneration(Arena *frame3DArena, Cells3D *outC3d,
         .startIdx = i * chunkSizePerThread,
         // get the next chunk based on the thread size and for the final thread,
         // process all remaining cells
-        .endIdx = i == numOfProcessors - 1 ? CUBE_COUNT
-                                           : (i + 1) * chunkSizePerThread};
+        .endIdx = (i + 1) * chunkSizePerThread};
+    if (i == numOfProcessors - 1) {
+      allThreadCells[i].endIdx = CUBE_COUNT;
+    }
 
     threads[i] =
         CreateThread(THREAD_DEFAULT_SEC_ATTRIBUTES, THREAD_DEFAULT_STACK_SIZE,
