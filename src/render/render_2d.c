@@ -30,6 +30,7 @@ Render2D Render2D_Init(Render *render) {
 }
 
 void Render2D_RenderMode(Render *render) {
+  Matrix foo;
   // initialize everything once
   Render2D *render2d = render->render2d;
 
@@ -135,7 +136,9 @@ void Render2D_RenderMode(Render *render) {
 
   EndMode2D();
 
-  // TODO: The menu should be rendered on the right hand side of the screen
+  // TODO: The menu should be rendered on the right hand side of the screen.
+  // By default the menu should be in expanded mode with the ability to
+  // minimize it to a ||| icon.
   // The menu should contain the following options:
   // - Display the current generation
   // - Pause the rendering
@@ -143,10 +146,12 @@ void Render2D_RenderMode(Render *render) {
   // - Generate random cells based on the density
   // NOTE: After 3D is done and have the time: multiple rules
   // - Select built-in rules to use
-  // - The user can write their custom rules (maybe Lua?)
-  // if (menu2d.isVisible) {
-  //   Menu2D_Draw(&menu);
-  // }
+  // - The user can write their custom rules (using fixed UI elements or maybe
+  // Lua?)
+
+  if (render->render2d->menu2d.isVisible) {
+    Menu2D_Draw(&render->render2d->menu2d);
+  }
 
   // free objects after each frame
   Arena_Free(&render->frame2DArena);

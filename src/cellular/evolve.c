@@ -1,4 +1,5 @@
 #include "evolve.h"
+#include "dstructs/arena.h"
 #include "const.h"
 #include "cells.h"
 #include <stdlib.h>
@@ -45,7 +46,7 @@ void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive) {
   }
 }
 
-// TODO: use a compute shader instead (since OpenGL 4.3)
+// TODO: use a compute shader instead, if needed (since OpenGL 4.3)
 // possibly binding the 2 SSBOs and call glDispatchCompute and glMemoryBarrier
 // or paralellize on the CPU side
 void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d) {

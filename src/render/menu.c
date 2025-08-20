@@ -9,18 +9,17 @@
 #include <stdbool.h>
 #include "render.h"
 
-Menu Menu_Init() {
+MainMenu Menu_Init() {
   LoadFonts();
   Font font = fonts_by_type[FONT_TYPE_FIRA_CODE_RETINA];
-  Menu menu = {
-      .selectedFont = font, .currentMode = RENDER_MODE_INIT, .isVisible = true};
+  MainMenu menu = {.selectedFont = font, .isVisible = true};
   return menu;
 }
 
 void Menu_Update(Render *render) {
   if (IsKeyPressed(KEY_ESCAPE)) {
     render->menu->isVisible = !render->menu->isVisible;
-    if (render->menu->currentMode == RENDER_MODE_3D) {
+    if (render->currentMode == RENDER_MODE_3D) {
       render->isMouseRestricted = !render->menu->isVisible;
     }
   }
@@ -98,14 +97,14 @@ void Menu_DrawText(Render *render, Vector2 firstTextPos,
 
 static void __Init_2D_Mode(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-    render->menu->currentMode = RENDER_MODE_2D;
+    render->currentMode = RENDER_MODE_2D;
     render->menu->isVisible = false;
   }
 }
 
 static void __Init_3D_Mode(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-    render->menu->currentMode = RENDER_MODE_3D;
+    render->currentMode = RENDER_MODE_3D;
     render->menu->isVisible = false;
     render->isMouseRestricted = true;
   }

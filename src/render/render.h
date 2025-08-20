@@ -22,10 +22,15 @@ typedef struct Render {
   Arena frame2DArena;
   Arena frame3DArena;
 
-  Menu *menu;
+  MainMenu *menu;
 
   Render2D *render2d;
   Render3D *render3d;
+
+  // TODO: A state machine to handle the mode changes would be better, but this
+  // keeps it simple for now
+  RenderMode prevMode;
+  RenderMode currentMode;
 
   // NOTE: might be worth replacing this to a ring buffer
   int charPressed;

@@ -2,6 +2,7 @@
 #define RENDER_2D
 
 #include "cellular/cells.h"
+#include "menu_2d.h"
 
 // forward declaration of Render, since Render is using Render2D and Render2D is
 // using Render this is only possible, because a pointer is used
@@ -9,6 +10,8 @@ struct Render;
 typedef struct Render Render;
 
 typedef struct Render2D {
+  Menu2D menu2d;
+
   Camera2D camera;
 
   Cells2D firstC2d;

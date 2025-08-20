@@ -9,6 +9,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g ${COMMON_FLAGS}")
 message(STATUS "CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
 
 # Get all .c standalone test files in this directory
+set(RESULTS_DIR "${CMAKE_BINARY_DIR}/test_results")
 file(GLOB STANDALONE_FILES "*.c")
 
 foreach(file ${STANDALONE_FILES})

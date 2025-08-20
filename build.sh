@@ -72,6 +72,12 @@ if [[ "$*" == *"--compat"* ]]; then
     compat_mode="ON"
 fi
 
+include_tests=""
+if [[ "$*" == *"--include-tests"* ]]; then
+    echo "Including tests in the build."
+    include_tests="ON"
+fi
+
 export CC=clang
 cmake -S . -B build \
     -G "MinGW Makefiles" \
@@ -84,7 +90,8 @@ cmake -S . -B build \
     -DCOMMON_FLAGS="$COMMON_FLAGS" \
     -DRAYLIB_VERSION="$raylib_version" \
     -DGRAPHICS_COMPAT_LEVEL="$graphics_compat_level" \
-    -DGRAPHICS_LEVEL="$graphics_level"
+    -DGRAPHICS_LEVEL="$graphics_level" \
+    -DINCLUDE_TESTS="$include_tests"
 
 # build the project
 cmake --build build $verbose_mode
@@ -96,7 +103,9 @@ else
     exit 1
 fi
 
-# Run tests (excluding standalone)
-echo "Running tests..."
-cd build
-ctest --output-on-failure
+if [[ "$include_tests" == "ON" ]]; then
+    # Run tests (excluding standalone)
+    echo "Running tests..."
+    cd build
+    ctest --output-on-failure
+fi

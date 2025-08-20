@@ -19,7 +19,7 @@ void Render_RenderWindow(Render *render) {
   SetWindowFocused();
 
   // must be called after InitWindow
-  Menu menu = Menu_Init();
+  MainMenu menu = Menu_Init();
 
   render->menu = &menu;
 
@@ -45,7 +45,7 @@ void Render_RenderWindow(Render *render) {
       render->isWireframeMode = false;
     }
 
-    if (menu.currentMode != menu.prevMode) {
+    if (render->currentMode != render->prevMode) {
       // whenever we switch modes, we free everything
       render->isModeFirstFrame = true;
 
@@ -65,12 +65,12 @@ void Render_RenderWindow(Render *render) {
         Arena_FreeZeroed(&render->frame3DArena);
       }
 
-      menu.prevMode = menu.currentMode;
+      render->prevMode = render->currentMode;
     }
 
     // select the current mode
     // TODO: implement the switching on modes in the main menu
-    switch (menu.currentMode) {
+    switch (render->currentMode) {
     case RENDER_MODE_INIT:
       Render_BeginDrawing();
       menu.isVisible = true;

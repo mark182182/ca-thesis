@@ -74,14 +74,15 @@ endif()
 
 project(${EXECUTABLE_NAME} LANGUAGES C)
 
-# Add any test directories
-
-enable_testing()
-add_subdirectory(tests/scratch)
-add_subdirectory(tests/unit)
-add_subdirectory(tests/integration)
-add_subdirectory(tests/benchmark)
-add_subdirectory(tests/e2e)
+if (INCLUDE_TESTS)
+    message(STATUS "Including tests in the build.")
+    enable_testing()
+    add_subdirectory(tests/scratch)
+    add_subdirectory(tests/unit)
+    add_subdirectory(tests/integration)
+    add_subdirectory(tests/benchmark)
+    add_subdirectory(tests/e2e)
+endif()
 
 # Add source to this project's executable.
 
@@ -155,5 +156,3 @@ endif()
 add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/resources)
-
-# TODO: Add tests and install targets if needed.

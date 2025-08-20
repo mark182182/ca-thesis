@@ -13,23 +13,23 @@ typedef enum RenderMode {
   MAX_RENDER_MODE
 } RenderMode;
 
+/*
+ * Struct for common menu fields
+ */
+// typedef struct Menu {
+// } Menu;
+
 /**
  * The main menu that is used to select the render modes. Also contains the main
  * read-only settings for other menus, like the selected font or the cursor
  * position.
  */
-typedef struct Menu {
+typedef struct MainMenu {
   Font selectedFont;
-
-  // TODO: A state machine to handle the mode changes would be better, but this
-  // keeps it simple for now
-  RenderMode prevMode;
-  RenderMode currentMode;
-
   bool isVisible;
-} Menu;
+} MainMenu;
 
-Menu Menu_Init();
+MainMenu Menu_Init();
 void Menu_Update(Render *render);
 void Menu_Draw(Render *render);
 void Menu_DrawDebug(Render *render);

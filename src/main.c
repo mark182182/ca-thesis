@@ -23,6 +23,9 @@ int main() {
       .render2d = NULL,
       .render3d = NULL,
 
+      .currentMode = RENDER_MODE_INIT,
+      .prevMode = NULL,
+
       .charPressed = 0,
       .deltaTime = 0,
       .fpsCap = FPS_CAP,
