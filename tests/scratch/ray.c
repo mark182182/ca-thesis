@@ -1,5 +1,4 @@
-#include <raylib.h>
-#include <raymath.h>
+#include "raylib_shim.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -119,7 +118,7 @@ void can_render_cubes() {
     EndDrawing();
   }
 
-  CloseWindow();
+  RaylibCloseWindow();
 }
 
 void can_identify_moore_neighbours_3d() {
@@ -244,7 +243,7 @@ void can_identify_moore_neighbours_3d() {
     EndDrawing();
   }
 
-  CloseWindow();
+  RaylibCloseWindow();
 }
 
 void can_specify_neighbour_indexes() {
@@ -451,7 +450,7 @@ void can_specify_neighbour_indexes() {
     EndDrawing();
   }
 
-  CloseWindow();
+  RaylibCloseWindow();
 }
 
 int main() {

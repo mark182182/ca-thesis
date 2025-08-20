@@ -1,6 +1,7 @@
 #ifndef CELLS_H
 #define CELLS_H
 
+#include "raylib_shim.h"
 #include "stdint.h"
 #include "const.h"
 
@@ -63,7 +64,7 @@ typedef struct Cells2D {
   bool *is_alive;
   int *positionsX;
   int *positionsY;
-  Color **colors;
+  RaylibColor **colors;
 
   int aliveCells;
 } Cells2D;

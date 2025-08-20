@@ -5,10 +5,10 @@
 
 typedef struct Render3D {
   // higher values mean slower updates
-  Camera3D camera;
-  Mesh cube;
-  Material matInstances;
-  Matrix *transforms;
+  RaylibCamera3D camera;
+  RaylibMesh cube;
+  RaylibMaterial matInstances;
+  RaylibMatrix *transforms;
 
   Cells3D firstC3d;
   Cells3D secondC3d;

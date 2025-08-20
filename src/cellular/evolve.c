@@ -2,6 +2,7 @@
 #include "const.h"
 #include "cells.h"
 #include <stdlib.h>
+#include "raylib_shim.h"
 
 int rule1DBits = 0x00000000;
 
@@ -109,20 +110,64 @@ static int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
   return neighbours;
 }
 
-// TODO: It should receive the exact ruleset as well (e.g. R(4555) or R(5766))
-void EvolveGOL3D_NextGeneration(Cells3D *outC3d, const Cells3D *inC3d) {
-  for (int i = 0; i < CUBE_COUNT; i++) {
-    int neighbours = __GOL3DCheckNeighbours(inC3d, i);
-    bool isCurrentAlive = inC3d->is_alive[i];
+// TODO: It should receive the exact ruleset as well (e.g. R(4555) or
+// R(5766)) NOTE: Since C11 it would be possible to use threads.h, but it
+// would add more overhead etc., so the Windows API version is used instead
+void EvolveGOL3D_NextGeneration(Arena *frame3DArena, Cells3D *outC3d,
+                                const Cells3D *inC3d) {
+
+  HANDLE threads[numOfProcessors];
+  Evolve3DThreadCells *allThreadCells = Arena_AllocAligned(
+      frame3DArena, numOfProcessors * sizeof(Evolve3DThreadCells),
+      DEFAULT_ARENA_ALIGNMENT);
+
+  int chunkSizePerThread = (CUBE_COUNT + numOfProcessors) / numOfProcessors;
+
+  for (int i = 0; i < numOfProcessors; i++) {
+    allThreadCells[i] = (Evolve3DThreadCells){
+        .inC3d = inC3d,
+        .outC3d = outC3d,
+        .startIdx = i * chunkSizePerThread,
+        // get the next chunk based on the thread size and for the final thread,
+        // process all remaining cells
+        .endIdx = i == numOfProcessors - 1 ? CUBE_COUNT
+                                           : (i + 1) * chunkSizePerThread};
+
+    threads[i] =
+        CreateThread(THREAD_DEFAULT_SEC_ATTRIBUTES, THREAD_DEFAULT_STACK_SIZE,
+                     __GOL3D_NextGenerationMultiThread, &allThreadCells[i],
+                     THREAD_DEFAULT_CREATION_FLAGS, THREAD_DEFAULT_THREAD_ID);
+
+    if (threads[i] == NULL) {
+      // TODO: handle thread creation failure properly
+      printf("Thread creation failed");
+    }
+  }
+
+  WaitForMultipleObjects(numOfProcessors, threads, THREAD_DEFAULT_WAIT_FOR_ALL,
+                         THREAD_DEFAULT_WAIT_MS);
+
+  for (int i = 0; i < numOfProcessors; i++) {
+    CloseHandle(threads[i]);
+  }
+}
+
+static void
+__GOL3D_NextGenerationMultiThread(Evolve3DThreadCells *threadCells) {
+  for (int i = threadCells->startIdx; i < threadCells->endIdx; i++) {
+    int neighbours = __GOL3DCheckNeighbours(threadCells->inC3d, i);
+    bool isCurrentAlive = threadCells->inC3d->is_alive[i];
 
     if (isCurrentAlive) {
       // under or overpopulation when < underpop && > overpop
       // lives on when == underpop && == overpop
-      outC3d->is_alive[i] = neighbours >= UNDERPOPULATION_UPPER_CAP_3D &&
-                            neighbours <= OVERPOPULATION_UPPER_CAP_3D;
+      threadCells->outC3d->is_alive[i] =
+          neighbours >= UNDERPOPULATION_UPPER_CAP_3D &&
+          neighbours <= OVERPOPULATION_UPPER_CAP_3D;
     } else {
       // reproduction
-      outC3d->is_alive[i] = neighbours == OVERPOPULATION_UPPER_CAP_3D;
+      threadCells->outC3d->is_alive[i] =
+          neighbours == OVERPOPULATION_UPPER_CAP_3D;
     }
   }
 }

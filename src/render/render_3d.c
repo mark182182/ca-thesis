@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <raylib.h>
-#include "raymath.h"
+#include "raylib_shim.h"
 
 #include "dstructs/arena.h"
 #include "cellular/cells.h"
@@ -103,10 +102,12 @@ void Render3D_RenderMode(Render *render) {
   if (render->deltaTime >= render->render3d->render3DSpeed) {
 
     if (currentGeneration != 0 && currentGeneration % 2 == 0) {
-      EvolveGOL3D_NextGeneration(&render->render3d->firstC3d,
+      EvolveGOL3D_NextGeneration(&render->frame3DArena,
+                                 &render->render3d->firstC3d,
                                  &render->render3d->secondC3d);
     } else {
-      EvolveGOL3D_NextGeneration(&render->render3d->secondC3d,
+      EvolveGOL3D_NextGeneration(&render->frame3DArena,
+                                 &render->render3d->secondC3d,
                                  &render->render3d->firstC3d);
     }
     currentGeneration++;
@@ -169,7 +170,6 @@ void Render3D_RenderMode(Render *render) {
       render->render3d->transforms[tIdx] = mul;
     }
   }
-
 
   // TODO: draw this in the 3D menu instead
   // printf("aliveCells: %d\n", actualCd->aliveCells);

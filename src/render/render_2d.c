@@ -2,7 +2,7 @@
 #include "render.h"
 #include "cellular/evolve.h"
 #include <assert.h>
-#include <raylib.h>
+#include "raylib_shim.h"
 #include "cellular/cells.h"
 #include "dstructs/arena.h"
 #include <time.h>

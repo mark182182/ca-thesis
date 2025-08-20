@@ -1,6 +1,6 @@
 #include "menu.h"
 
-#include <raylib.h>
+#include "raylib_shim.h"
 #include "const.h"
 #include "font.h"
 #include <stdlib.h>

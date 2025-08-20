@@ -8,7 +8,6 @@
 #ifndef EVOLVE_H
 #define EVOLVE_H
 
-#include <raylib.h>
 #include "const.h"
 #include "cells.h"
 
@@ -23,11 +22,24 @@ typedef enum Evolve2DParams {
 // TODO: hard-coded rule 4555 would need to be changed to use dynamic rulesets
 // instead
 typedef enum Evolve3DParams {
-  // UNDERPOPULATION_UPPER_CAP_3D = 4,
-  // OVERPOPULATION_UPPER_CAP_3D = 5
-   UNDERPOPULATION_UPPER_CAP_3D = 2,
-   OVERPOPULATION_UPPER_CAP_3D = 3
+  UNDERPOPULATION_UPPER_CAP_3D = 4,
+  OVERPOPULATION_UPPER_CAP_3D = 5
+  //  UNDERPOPULATION_UPPER_CAP_3D = 2,
+  //  OVERPOPULATION_UPPER_CAP_3D = 3
 } Evolve3DParams;
+
+/*
+ * The current thread data for processing the next generation.
+ * Overlapping indexes are not permitted, one thread can only process one
+ * continuous range at a time.
+ */
+typedef struct Evolve3DThreadCells {
+  Cells3D *outC3d;
+  const Cells3D *inC3d;
+
+  int startIdx;
+  int endIdx;
+} Evolve3DThreadCells;
 
 /*
  * Generate initial values (e.g. position, color) for each cells in the
@@ -58,8 +70,8 @@ static int __GOL2DCheckNeighbours(Cells2D *inC2d, int i);
  * Evolve the given partitioned space to the next generation for 3D rendering.
  *
  * The default rules for 2D can be applied, but in 3D there are many more
- * neighbours, so most configurations quickly die out. Because of this, the rules
- * that are implemented are usually are different for Game of Life in 3D.
+ * neighbours, so most configurations quickly die out. Because of this, the
+ * rules that are implemented are usually are different for Game of Life in 3D.
  *
  * These were most notably researched by Carter Bays, which is generally called
  * "3D Life". These are different rulesets which support more stable and complex
@@ -80,7 +92,10 @@ static int __GOL2DCheckNeighbours(Cells2D *inC2d, int i);
  * if it has fewer than 4 or more than 5. A
  * dead cell becomes alive if it has 5 neighbours.
  */
-void EvolveGOL3D_NextGeneration(Cells3D *outC3d, const Cells3D *inC3d);
+void EvolveGOL3D_NextGeneration(Arena *frame3DArena, Cells3D *outC3d,
+                                const Cells3D *inC3d);
+
+static void __GOL3D_NextGenerationMultiThread(Evolve3DThreadCells *threadCells);
 static int __GOL3DCheckNeighbours(Cells3D *inC3d, int i);
 
 /**

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
-#include "test_util.h"
+#include "../test_util.h"
 
 // this should not display any warnings besides unused variables
 void can_use_compile_time_constants() {

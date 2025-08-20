@@ -4,8 +4,7 @@ project(standalone_tests C)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls ${COMMON_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g ${COMMON_FLAGS}")
 
 message(STATUS "CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
 

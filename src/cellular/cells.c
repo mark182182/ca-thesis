@@ -1,7 +1,7 @@
 #include "evolve.h"
 #include "const.h"
 #include "cells.h"
-#include <raylib.h>
+#include "raylib_shim.h"
 #include <stdlib.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
@@ -71,7 +71,7 @@ void Cells2D_InitArraysBasedOnCellSize(Arena *arena, Cells2D *c2d) {
   c2d->positionsY = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(int),
                                              DEFAULT_ARENA_ALIGNMENT);
 
-  c2d->colors = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(Color *),
+  c2d->colors = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(RaylibColor *),
                                          DEFAULT_ARENA_ALIGNMENT);
 }
 

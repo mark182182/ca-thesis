@@ -1,8 +1,9 @@
+#include "raylib_shim.h"
+
 #include "const.h"
 #include "render/render.h"
 #include <stdbool.h>
 #include <stdlib.h>
-
 
 int main() {
   // TODO: Enable debug or use Renderdoc instead

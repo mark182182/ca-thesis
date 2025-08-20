@@ -1,7 +1,7 @@
 #ifndef CONST_H
 #define CONST_H
 
-#include <raylib.h>
+#include "raylib_shim.h"
 #include "dstructs/arena.h"
 
 /*
@@ -17,16 +17,27 @@ extern bool DEBUG_MODE;
 // to omit it (would only be useable in some cases, e.g. when the a specified
 // value has to be passed of the given enum type to state the intent)
 
-enum { SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 720, FPS_CAP = 60, FONT_SIZE = 32  };
+enum { SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 720, FPS_CAP = 60, FONT_SIZE = 32 };
 
-extern const Color RECT_COLOR;
-extern const Color TEXT_COLOR;
-extern const Color RANDOM_COLORS[24];
+// thread related defaults
+extern const LPSECURITY_ATTRIBUTES THREAD_DEFAULT_SEC_ATTRIBUTES;
+extern const size_t THREAD_DEFAULT_STACK_SIZE;
+extern const DWORD THREAD_DEFAULT_CREATION_FLAGS;
+extern const LPDWORD THREAD_DEFAULT_THREAD_ID;
+extern const bool THREAD_DEFAULT_WAIT_FOR_ALL;
+extern const LPDWORD THREAD_DEFAULT_WAIT_MS;
+
+// raylib related defaults
+extern const RaylibColor RECT_COLOR;
+extern const RaylibColor TEXT_COLOR;
+extern const RaylibColor RANDOM_COLORS[24];
 
 /**
  *  The lifetime of this arena is the lifetime of the renderer/application
  */
 extern Arena permanentArena;
+
+extern int numOfProcessors;
 
 // any constant expression that cannot be initialized at compile time
 void InitializeConstants();

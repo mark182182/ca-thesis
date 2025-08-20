@@ -2,7 +2,7 @@
 #define FONT_H
 
 #include <stdio.h>
-#include <raylib.h>
+#include "raylib_shim.h"
 
 // using FontType as the name would clash with raylib
 typedef enum RenderFontType {

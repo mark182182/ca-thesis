@@ -1,7 +1,7 @@
 #ifndef MENU_H
 #define MENU_H
 
-#include <raylib.h>
+#include "raylib_shim.h"
 
 // forward declarations
 typedef struct Render Render;
@@ -34,13 +34,13 @@ void Menu_Update(Render *render);
 void Menu_Draw(Render *render);
 void Menu_DrawDebug(Render *render);
 
-void Menu_DrawTextDefault(Render *render, Vector2 firstTextPos,
-                          Vector2 *currentTextPos, const char *textToDraw,
+void Menu_DrawTextDefault(Render *render, RaylibVector2 firstTextPos,
+                          RaylibVector2 *currentTextPos, const char *textToDraw,
                           void (*onCollisionFn)(Render *render));
 
-void Menu_DrawText(Render *render, Vector2 firstTextPos,
-                   Vector2 *currentTextPos, const char *textToDraw,
-                   int fontSize, Color rectColor, Color textColor,
+void Menu_DrawText(Render *render, RaylibVector2 firstTextPos,
+                   RaylibVector2 *currentTextPos, const char *textToDraw,
+                   int fontSize, RaylibColor rectColor, RaylibColor textColor,
                    void (*onCollisionFn)(Render *render));
 
 static void __Init_2D_Mode(Render *render);
