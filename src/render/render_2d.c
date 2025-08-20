@@ -7,6 +7,7 @@
 #include "dstructs/arena.h"
 #include <time.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "const.h"
 
 static int currentGeneration = 0;
@@ -22,7 +23,10 @@ Render2D Render2D_Init(Render *render) {
   Camera2D camera = {0};
   camera.zoom = 1.0f;
 
-  Render2D render2d = {.camera = camera,
+  Menu2D menu2d = {.isVisible = true};
+
+  Render2D render2d = {.menu2d = menu2d,
+                       .camera = camera,
                        .firstC2d = {0},
                        .secondC2d = {0},
                        .render2DSpeed = 0.4f};
@@ -139,7 +143,7 @@ void Render2D_RenderMode(Render *render) {
   // Lua?)
 
   if (render->render2d->menu2d.isVisible) {
-    Menu2D_Draw(&render->render2d->menu2d);
+    Menu2D_Draw(render);
   }
 
   // free objects after each frame

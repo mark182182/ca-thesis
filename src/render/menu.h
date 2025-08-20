@@ -2,6 +2,7 @@
 #define MENU_H
 
 #include "raylib_shim.h"
+#include <stdbool.h>
 
 // forward declarations
 typedef struct Render Render;
@@ -29,19 +30,30 @@ typedef struct MainMenu {
   bool isVisible;
 } MainMenu;
 
+typedef struct MenuDrawParams {
+  Render *render;
+  Vector2 firstTextPos;
+  Vector2 *currentTextPos;
+
+  const char *textToDraw;
+  int fontSize;
+
+  Color rectColor;
+  Color textColor;
+
+  void (*onCollisionFn)(Render *render);
+
+  bool isLastToDraw;
+} MenuDrawParams;
+
 MainMenu Menu_Init();
 void Menu_Update(Render *render);
 void Menu_Draw(Render *render);
 void Menu_DrawDebug(Render *render);
 
-void Menu_DrawTextDefault(Render *render, Vector2 firstTextPos,
-                          Vector2 *currentTextPos, const char *textToDraw,
-                          void (*onCollisionFn)(Render *render));
+void Menu_DrawTextDefault(MenuDrawParams drawParams);
 
-void Menu_DrawText(Render *render, Vector2 firstTextPos,
-                   Vector2 *currentTextPos, const char *textToDraw,
-                   int fontSize, Color rectColor, Color textColor,
-                   void (*onCollisionFn)(Render *render));
+void Menu_DrawText(MenuDrawParams drawParams);
 
 static void __Init_2D_Mode(Render *render);
 static void __Init_3D_Mode(Render *render);

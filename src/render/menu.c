@@ -35,13 +35,27 @@ void Menu_Draw(Render *render) {
   Vector2 longestTextLength = {.x = 0, .y = 0};
   Vector2 currentTextPos = {.x = firstTextPos.x, .y = firstTextPos.y};
 
-  Menu_DrawTextDefault(render, firstTextPos, &currentTextPos, "2D Mode",
-                       __Init_2D_Mode);
-  Menu_DrawTextDefault(render, firstTextPos, &currentTextPos, "3D Mode",
-                       __Init_3D_Mode);
-  Menu_DrawTextDefault(render, firstTextPos, &currentTextPos, "Settings", noOp);
-  Menu_DrawTextDefault(render, firstTextPos, &currentTextPos, "Exit",
-                       __Close_Window);
+  Menu_DrawTextDefault((MenuDrawParams){.render = render,
+                                        .firstTextPos = firstTextPos,
+                                        .currentTextPos = &currentTextPos,
+                                        .textToDraw = "2D Mode",
+                                        .onCollisionFn = __Init_2D_Mode});
+
+  Menu_DrawTextDefault((MenuDrawParams){.render = render,
+                                        .firstTextPos = firstTextPos,
+                                        .currentTextPos = &currentTextPos,
+                                        .textToDraw = "3D Mode",
+                                        .onCollisionFn = __Init_3D_Mode});
+  Menu_DrawTextDefault((MenuDrawParams){.render = render,
+                                        .firstTextPos = firstTextPos,
+                                        .currentTextPos = &currentTextPos,
+                                        .textToDraw = "Settings",
+                                        .onCollisionFn = noOp});
+  Menu_DrawTextDefault((MenuDrawParams){.render = render,
+                                        .firstTextPos = firstTextPos,
+                                        .currentTextPos = &currentTextPos,
+                                        .textToDraw = "Exit",
+                                        .onCollisionFn = __Close_Window});
 }
 
 void Menu_DrawDebug(Render *render) {
@@ -57,45 +71,53 @@ void Menu_DrawDebug(Render *render) {
   snprintf(frameTimeText, sizeof(frameTimeText), "Frametime: %0.8f",
            GetFrameTime());
 
-  Menu_DrawTextDefault(render, firstTextPos, &currentTextPos, fpsText, NULL);
-  Menu_DrawTextDefault(render, firstTextPos, &currentTextPos, frameTimeText,
-                       NULL);
+  Menu_DrawTextDefault((MenuDrawParams){.render = render,
+                                        .firstTextPos = firstTextPos,
+                                        .currentTextPos = &currentTextPos,
+                                        .textToDraw = fpsText,
+                                        .onCollisionFn = NULL});
+  Menu_DrawTextDefault((MenuDrawParams){.render = render,
+                                        .firstTextPos = firstTextPos,
+                                        .currentTextPos = &currentTextPos,
+                                        .textToDraw = frameTimeText,
+
+                                        .onCollisionFn = NULL});
 }
 
-void Menu_DrawTextDefault(Render *render, Vector2 firstTextPos,
-                          Vector2 *currentTextPos, const char *textToDraw,
-                          void (*onCollisionFn)(Render *render)) {
-  Menu_DrawText(render, firstTextPos, currentTextPos, textToDraw, FONT_SIZE,
-                RECT_COLOR, TEXT_COLOR, onCollisionFn);
+void Menu_DrawTextDefault(MenuDrawParams drawParams) {
+  drawParams.fontSize = FONT_SIZE;
+  drawParams.rectColor = RECT_COLOR;
+  drawParams.textColor = TEXT_COLOR;
+
+  Menu_DrawText(drawParams);
 }
 
-void Menu_DrawText(Render *render, Vector2 firstTextPos,
-                   Vector2 *currentTextPos, const char *textToDraw,
-                   int fontSize, Color rectColor, Color textColor,
-                   void (*onCollisionFn)(Render *render)) {
-  Color currentRectColor = rectColor;
+void Menu_DrawText(MenuDrawParams drawParams) {
+  Color currentRectColor = drawParams.rectColor;
   Vector2 textLength =
-      MeasureTextEx(render->menu->selectedFont, textToDraw, fontSize, 0);
+      MeasureTextEx(drawParams.render->menu->selectedFont,
+                    drawParams.textToDraw, drawParams.fontSize, 0);
 
-  Rectangle textRect = {.x = firstTextPos.x,
-                        .y = currentTextPos->y,
+  Rectangle textRect = {.x = drawParams.firstTextPos.x,
+                        .y = drawParams.currentTextPos->y,
                         .width = textLength.x,
                         .height = textLength.y};
 
   if (CheckCollisionPointRec(GetMousePosition(), textRect)) {
     currentRectColor = DARKGRAY;
-    if (onCollisionFn != NULL) {
-      onCollisionFn(render);
+    if (drawParams.onCollisionFn != NULL) {
+      drawParams.onCollisionFn(drawParams.render);
     }
   }
 
   DrawRectangleRec(textRect, currentRectColor);
-  Vector2 position = {.x = firstTextPos.x, .y = currentTextPos->y};
-  DrawTextEx(render->menu->selectedFont, textToDraw, position, fontSize, 0,
-             textColor);
+  Vector2 position = {.x = drawParams.firstTextPos.x,
+                      .y = drawParams.currentTextPos->y};
+  DrawTextEx(drawParams.render->menu->selectedFont, drawParams.textToDraw,
+             position, drawParams.fontSize, 0, drawParams.textColor);
 
-  currentTextPos->x += textLength.x;
-  currentTextPos->y += textLength.y;
+  drawParams.currentTextPos->x += textLength.x;
+  drawParams.currentTextPos->y += textLength.y;
 }
 
 static void __Init_2D_Mode(Render *render) {
