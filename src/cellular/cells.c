@@ -73,6 +73,7 @@ void Cells2D_InitArraysBasedOnCellSize(Arena *arena, Cells2D *c2d) {
 
   c2d->colors = Arena_AllocAlignedZeroed(arena, CELL_COUNT * sizeof(Color *),
                                          DEFAULT_ARENA_ALIGNMENT);
+  c2d->aliveCells = 0;
 }
 
 void Cells3D_InitArraysBasedOnCellSize(Arena *arena, Cells3D *c3d) {
@@ -87,4 +88,5 @@ void Cells3D_InitArraysBasedOnCellSize(Arena *arena, Cells3D *c3d) {
 
   c3d->positionsZ = Arena_AllocAlignedZeroed(arena, CUBE_COUNT * sizeof(int),
                                              DEFAULT_ARENA_ALIGNMENT);
+  c3d->aliveCells = 0;
 }

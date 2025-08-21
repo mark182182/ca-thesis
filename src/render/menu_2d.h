@@ -13,4 +13,6 @@ typedef struct Menu2D {
 Menu2D Menu2D_Init(Render *render);
 void Menu2D_Draw(Render *render);
 
+static void __ToggleMinimize2DMenu(Render *render);
+
 #endif

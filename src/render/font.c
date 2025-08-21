@@ -9,7 +9,7 @@ void LoadFonts() {
 
   // FiraCode-Retina.ttf
   Font font = LoadFontEx(
-      "resources/fonts/firacode/FiraCode-Retina.ttf", FONT_SIZE, 0, 250);
+      "resources/fonts/firacode/FiraCode-Retina.ttf", MAIN_FONT_SIZE, 0, 250);
 
   assert(font.baseSize != 0);
 

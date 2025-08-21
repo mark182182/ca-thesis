@@ -31,17 +31,16 @@ Arena Arena_Init(char *name, uint8_t *memory, size_t capacity) {
   return arena;
 }
 
-inline void *Arena_AllocAlignedZeroed(Arena *arena, size_t size,
-                                      size_t alignment) {
+void *Arena_AllocAlignedZeroed(Arena *arena, size_t size, size_t alignment) {
   return __Arena_Alloc(arena, size, alignment, true);
 }
 
-inline void *Arena_AllocAligned(Arena *arena, size_t size, size_t alignment) {
+void *Arena_AllocAligned(Arena *arena, size_t size, size_t alignment) {
   return __Arena_Alloc(arena, size, alignment, false);
 }
 
-inline void *__Arena_Alloc(Arena *arena, size_t size, size_t alignment,
-                           bool shouldZeroOut) {
+void *__Arena_Alloc(Arena *arena, size_t size, size_t alignment,
+                    bool shouldZeroOut) {
   // TODO: debug allocations, if DEBUG_MODE is enabled
   // printf_s("\nCurrent size to allocate: %zu\n", size);
   // printf_s("\nCurrent used: %zu\n", arena->used);
@@ -57,7 +56,7 @@ inline void *__Arena_Alloc(Arena *arena, size_t size, size_t alignment,
   size_t newUsedSize = arena->used + paddingSize + size;
 
   if (newUsedSize > arena->capacity) {
-  printf_s("Allocation would be over the limit");
+    printf_s("Allocation would be over the limit");
     printf_s("\nWanted newUsedSize: %zu\n", newUsedSize);
     __ExitWithArenaMsg(arena,
                        "Cannot allocate memory, arena would be over capacity");
@@ -72,16 +71,16 @@ inline void *__Arena_Alloc(Arena *arena, size_t size, size_t alignment,
 }
 
 /*
-Rolls back the pointer to the original position, so the pre-allocated backing
-byte storage can be reused.
-*/
-inline void Arena_Free(Arena *arena) {
+ * Rolls back the pointer to the original position, so the pre-allocated backing
+ * byte storage can be reused.
+ */
+void Arena_Free(Arena *arena) {
   if (arena != NULL) {
     arena->used = 0;
   }
 }
 
-inline void Arena_FreeZeroed(Arena *arena) {
+void Arena_FreeZeroed(Arena *arena) {
   if (arena != NULL) {
     arena->used = 0;
     if (arena->memory != NULL) {

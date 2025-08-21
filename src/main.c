@@ -31,7 +31,7 @@ int main() {
       .fpsCap = FPS_CAP,
 
       .isWireframeMode = false,
-      .isPaused = false,
+      .isPaused = true,
       .isDebugOn = false,
   };
 

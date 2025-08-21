@@ -4,10 +4,29 @@
 #include "const.h"
 #include "font.h"
 #include <stdlib.h>
-#include "common.h"
 #include <string.h>
 #include <stdbool.h>
 #include "render.h"
+
+MenuDrawParams MenuParams_InitWithDefaults(Render *render) {
+  return (MenuDrawParams){.render = render,
+                          .fontSize = MAIN_FONT_SIZE,
+                          .rectColor = DEFAULT_RECT_COLOR,
+                          .textColor = DEFAULT_TEXT_COLOR,
+                          .font = render->menu->selectedFont,
+                          .onCollisionFn = NULL};
+}
+MenuDrawParams MenuParams_ShallowCopy(MenuDrawParams *drawParams) {
+  return (MenuDrawParams){.render = drawParams->render,
+                          .firstTextPos = drawParams->firstTextPos,
+                          .currentTextPos = drawParams->currentTextPos,
+                          .textToDraw = drawParams->textToDraw,
+                          .fontSize = drawParams->fontSize,
+                          .font = drawParams->font,
+                          .rectColor = drawParams->rectColor,
+                          .textColor = drawParams->textColor,
+                          .onCollisionFn = drawParams->onCollisionFn};
+}
 
 MainMenu Menu_Init() {
   LoadFonts();
@@ -30,32 +49,36 @@ void Menu_Draw(Render *render) {
   // another way to be perfectly centered
   uint8_t centerRatio = 3;
 
-  Vector2 firstTextPos = {.x = (SCREEN_WIDTH / 2) - (FONT_SIZE * centerRatio),
-                          .y = (SCREEN_HEIGHT / 2) - (FONT_SIZE * centerRatio)};
+  Vector2 firstTextPos = {
+      .x = (SCREEN_WIDTH / 2) - (MAIN_FONT_SIZE * centerRatio),
+      .y = (SCREEN_HEIGHT / 2) - (MAIN_FONT_SIZE * centerRatio)};
   Vector2 longestTextLength = {.x = 0, .y = 0};
   Vector2 currentTextPos = {.x = firstTextPos.x, .y = firstTextPos.y};
 
-  Menu_DrawTextDefault((MenuDrawParams){.render = render,
-                                        .firstTextPos = firstTextPos,
-                                        .currentTextPos = &currentTextPos,
-                                        .textToDraw = "2D Mode",
-                                        .onCollisionFn = __Init_2D_Mode});
+  MenuDrawParams commonParams = MenuParams_InitWithDefaults(render);
+  commonParams.firstTextPos = firstTextPos;
+  commonParams.currentTextPos = &currentTextPos;
 
-  Menu_DrawTextDefault((MenuDrawParams){.render = render,
-                                        .firstTextPos = firstTextPos,
-                                        .currentTextPos = &currentTextPos,
-                                        .textToDraw = "3D Mode",
-                                        .onCollisionFn = __Init_3D_Mode});
-  Menu_DrawTextDefault((MenuDrawParams){.render = render,
-                                        .firstTextPos = firstTextPos,
-                                        .currentTextPos = &currentTextPos,
-                                        .textToDraw = "Settings",
-                                        .onCollisionFn = noOp});
-  Menu_DrawTextDefault((MenuDrawParams){.render = render,
-                                        .firstTextPos = firstTextPos,
-                                        .currentTextPos = &currentTextPos,
-                                        .textToDraw = "Exit",
-                                        .onCollisionFn = __Close_Window});
+  MenuDrawParams mode2DParams = MenuParams_ShallowCopy(&commonParams);
+  // NOTE: usually there should be an existing dictionary that contains the user
+  // facing texts/messages to draw instead of hard-coding them
+  mode2DParams.textToDraw = "2D Mode";
+  mode2DParams.onCollisionFn = __OnCollInit2DMode;
+  Menu_DrawText(&mode2DParams);
+
+  MenuDrawParams mode3DParams = MenuParams_ShallowCopy(&commonParams);
+  mode3DParams.textToDraw = "3D Mode";
+  mode3DParams.onCollisionFn = __OnCollInit3DMode;
+  Menu_DrawText(&mode3DParams);
+
+  MenuDrawParams settingsParams = MenuParams_ShallowCopy(&commonParams);
+  settingsParams.textToDraw = "Settings";
+  Menu_DrawText(&settingsParams);
+
+  MenuDrawParams exitParams = MenuParams_ShallowCopy(&commonParams);
+  exitParams.textToDraw = "Exit";
+  exitParams.onCollisionFn = __OnCollCloseWindow;
+  Menu_DrawText(&exitParams);
 }
 
 void Menu_DrawDebug(Render *render) {
@@ -71,63 +94,59 @@ void Menu_DrawDebug(Render *render) {
   snprintf(frameTimeText, sizeof(frameTimeText), "Frametime: %0.8f",
            GetFrameTime());
 
-  Menu_DrawTextDefault((MenuDrawParams){.render = render,
-                                        .firstTextPos = firstTextPos,
-                                        .currentTextPos = &currentTextPos,
-                                        .textToDraw = fpsText,
-                                        .onCollisionFn = NULL});
-  Menu_DrawTextDefault((MenuDrawParams){.render = render,
-                                        .firstTextPos = firstTextPos,
-                                        .currentTextPos = &currentTextPos,
-                                        .textToDraw = frameTimeText,
+  MenuDrawParams commonParams = MenuParams_InitWithDefaults(render);
+  commonParams.firstTextPos = firstTextPos;
+  commonParams.currentTextPos = &currentTextPos;
 
-                                        .onCollisionFn = NULL});
+  MenuDrawParams fpsParams = MenuParams_ShallowCopy(&commonParams);
+  fpsParams.textToDraw = fpsText;
+  Menu_DrawText(&fpsParams);
+
+  MenuDrawParams frameTimeParams = MenuParams_ShallowCopy(&commonParams);
+  frameTimeParams.textToDraw = frameTimeText;
+  Menu_DrawText(&frameTimeParams);
 }
 
-void Menu_DrawTextDefault(MenuDrawParams drawParams) {
-  drawParams.fontSize = FONT_SIZE;
-  drawParams.rectColor = RECT_COLOR;
-  drawParams.textColor = TEXT_COLOR;
+void Menu_DrawText(MenuDrawParams *drawParams) {
+  Color currentRectColor = drawParams->rectColor;
+  Vector2 textLength = MeasureTextEx(drawParams->font, drawParams->textToDraw,
+                                     drawParams->fontSize, 0);
 
-  Menu_DrawText(drawParams);
-}
-
-void Menu_DrawText(MenuDrawParams drawParams) {
-  Color currentRectColor = drawParams.rectColor;
-  Vector2 textLength =
-      MeasureTextEx(drawParams.render->menu->selectedFont,
-                    drawParams.textToDraw, drawParams.fontSize, 0);
-
-  Rectangle textRect = {.x = drawParams.firstTextPos.x,
-                        .y = drawParams.currentTextPos->y,
+  Rectangle textRect = {.x = drawParams->firstTextPos.x,
+                        .y = drawParams->currentTextPos->y,
                         .width = textLength.x,
                         .height = textLength.y};
 
-  if (CheckCollisionPointRec(GetMousePosition(), textRect)) {
+  if (drawParams->onCollisionFn != NULL &&
+      CheckCollisionPointRec(GetMousePosition(), textRect)) {
     currentRectColor = DARKGRAY;
-    if (drawParams.onCollisionFn != NULL) {
-      drawParams.onCollisionFn(drawParams.render);
-    }
+    drawParams->onCollisionFn(drawParams->render);
   }
 
   DrawRectangleRec(textRect, currentRectColor);
-  Vector2 position = {.x = drawParams.firstTextPos.x,
-                      .y = drawParams.currentTextPos->y};
-  DrawTextEx(drawParams.render->menu->selectedFont, drawParams.textToDraw,
-             position, drawParams.fontSize, 0, drawParams.textColor);
+  Vector2 position = {.x = drawParams->firstTextPos.x,
+                      .y = drawParams->currentTextPos->y};
+  DrawTextEx(drawParams->render->menu->selectedFont, drawParams->textToDraw,
+             position, drawParams->fontSize, 0, drawParams->textColor);
 
-  drawParams.currentTextPos->x += textLength.x;
-  drawParams.currentTextPos->y += textLength.y;
+  drawParams->currentTextPos->x += textLength.x;
+  drawParams->currentTextPos->y += textLength.y;
 }
 
-static void __Init_2D_Mode(Render *render) {
+void Menu_OnCollPauseRender(Render *render) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    render->isPaused = !render->isPaused;
+  }
+}
+
+static void __OnCollInit2DMode(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
     render->currentMode = RENDER_MODE_2D;
     render->menu->isVisible = false;
   }
 }
 
-static void __Init_3D_Mode(Render *render) {
+static void __OnCollInit3DMode(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
     render->currentMode = RENDER_MODE_3D;
     render->menu->isVisible = false;
@@ -135,7 +154,7 @@ static void __Init_3D_Mode(Render *render) {
   }
 }
 
-static void __Close_Window(Render *render) {
+static void __OnCollCloseWindow(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
     exit(0);
   }

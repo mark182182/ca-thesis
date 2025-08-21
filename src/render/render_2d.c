@@ -10,8 +10,6 @@
 #include <stdbool.h>
 #include "const.h"
 
-static int currentGeneration = 0;
-
 Render2D Render2D_Init(Render *render) {
   Arena mode2DArena =
       Arena_Init("modeArena", &mode2DArenaStorage, MODE_2D_STORAGE_SIZE);
@@ -29,7 +27,8 @@ Render2D Render2D_Init(Render *render) {
                        .camera = camera,
                        .firstC2d = {0},
                        .secondC2d = {0},
-                       .render2DSpeed = 0.4f};
+                       .render2DSpeed = 0.4f,
+                       .currentGeneration = 0};
   return render2d;
 }
 
@@ -46,47 +45,28 @@ void Render2D_RenderMode(Render *render) {
 
     // TODO: Randomization should only be set, if the user clicks on the button
     // or similar
-    Evolve2D_InitializeCells(&render2d->firstC2d, true);
+    Evolve2D_InitializeCells(&render2d->firstC2d, false);
     Evolve2D_InitializeCells(&render2d->secondC2d, false);
   }
 
   // would implement batched rendering, draw calls here
 
-  // TODO: These should come from the 2D menu
-  if (IsKeyPressed(KEY_P)) {
-    render->isPaused = !render->isPaused;
-  }
-  /*
-    if (pressed == 'r') {
-      // TODO: here we should set the randomization based on the user
-    interaction EvolveGOL2D_InitializeCells(&firstCd, true);
-      EvolveGOL2D_InitializeCells(&secondCd, false);
-      currentGeneration = 0;
-    }
-
-    if (pressed == 'w') {
-      render2DSpeed -= 0.001f;
-    }
-
-    if (pressed == 's') {
-      render2DSpeed += 0.001f;
-    }
-  */
-
   if (render->isPaused == 0 && render->deltaTime >= render2d->render2DSpeed) {
     clock_t time = clock();
-    if (currentGeneration != 0 && currentGeneration % 2 == 0) {
+    if (render2d->currentGeneration != 0 &&
+        render2d->currentGeneration % 2 == 0) {
       EvolveGOL2D_NextGeneration(&render2d->firstC2d, &render2d->secondC2d);
     } else {
       EvolveGOL2D_NextGeneration(&render2d->secondC2d, &render2d->firstC2d);
     }
-    currentGeneration++;
+    render2d->currentGeneration++;
     render->deltaTime = 0;
   }
   render->deltaTime += GetFrameTime();
 
-  Cells2D *actualCd =
-      currentGeneration % 2 == 0 ? &render2d->secondC2d : &render2d->firstC2d;
+  Cells2D *actualCd = render2d->currentGeneration % 2 == 0
+                          ? &render2d->secondC2d
+                          : &render2d->firstC2d;
 
   // update variables here
 
@@ -95,6 +75,7 @@ void Render2D_RenderMode(Render *render) {
   BeginMode2D(render2d->camera);
 
   // TODO: This should be drawn in a single call
+  int aliveCells = 0;
   for (int i = 0; i < CELL_COUNT; i++) {
     Color color = *actualCd->colors[i];
     // TODO: Revise this, just an example
@@ -105,11 +86,11 @@ void Render2D_RenderMode(Render *render) {
     if (CheckCollisionPointRec(GetMousePosition(), rect)) {
       Vector2 position = {.x = 100, .y = 200};
       char posText[32];
-      snprintf(posText, sizeof(posText), "Pos: %f, cellX: %f",
+      snprintf(posText, sizeof(posText), "PosX: %f, cellX: %f",
                GetMousePosition().x, rect.x);
 
       DrawTextEx(render->menu->selectedFont, posText, GetMousePosition(),
-                 FONT_SIZE, 0, TEXT_COLOR);
+                 SUB_FONT_SIZE, 0, DEFAULT_TEXT_COLOR);
       color = YELLOW;
 
       // TODO: Make sure the user can set the current cell's alive state
@@ -119,35 +100,38 @@ void Render2D_RenderMode(Render *render) {
     }
 
     if (actualCd->is_alive[i]) {
+      aliveCells++;
       DrawRectangle(actualCd->positionsX[i], actualCd->positionsY[i],
                     CELL_HEIGHT_RATIO, CELL_WIDTH_RATIO, color);
-    } else if (color.a == YELLOW.a && color.b == YELLOW.b) {
+    } else if (color.r == YELLOW.r && color.g == YELLOW.g &&
+               color.b == YELLOW.b && color.a == YELLOW.a) {
       DrawRectangle(actualCd->positionsX[i], actualCd->positionsY[i],
                     CELL_HEIGHT_RATIO, CELL_WIDTH_RATIO, color);
     }
   }
+  actualCd->aliveCells = aliveCells;
 
   EndMode2D();
 
-  // TODO: The menu should be rendered on the right hand side of the screen.
-  // By default the menu should be in expanded mode with the ability to
-  // minimize it to a ||| icon.
-  // The menu should contain the following options:
-  // - Display the current generation
-  // - Pause the rendering
-  // - Revert the rendering to the 0th generation
-  // - Generate random cells based on the density
-  // NOTE: After 3D is done and have the time: multiple rules
-  // - Select built-in rules to use
-  // - The user can write their custom rules (using fixed UI elements or maybe
-  // Lua?)
-
-  if (render->render2d->menu2d.isVisible) {
-    Menu2D_Draw(render);
-  }
+  Menu2D_Draw(render);
 
   // free objects after each frame
   Arena_Free(&render->frame2DArena);
 
   // TODO: Check, if the mode changed, then free the modeArena
+}
+
+void Render2D_ResetCells(Render *render) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    Evolve2D_InitializeCells(&render->render2d->firstC2d, false);
+    Evolve2D_InitializeCells(&render->render2d->secondC2d, false);
+    render->render2d->currentGeneration = 0;
+  }
+}
+
+void Render2D_RandomizeZeroGen(Render *render) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    Evolve2D_InitializeCells(&render->render2d->firstC2d, true);
+    render->render2d->currentGeneration = 0;
+  }
 }

@@ -14,6 +14,26 @@ typedef enum RenderMode {
   MAX_RENDER_MODE
 } RenderMode;
 
+typedef struct MenuDrawParams {
+  Render *render;
+  Vector2 firstTextPos;
+  Vector2 *currentTextPos;
+
+  const char *textToDraw;
+  int fontSize;
+
+  Font font;
+  Color rectColor;
+  Color textColor;
+
+  bool shouldCollide;
+  void (*onCollisionFn)(Render *render);
+} MenuDrawParams;
+
+// NOTE: __may__ be inlined at call sites
+inline MenuDrawParams MenuParams_InitWithDefaults(Render *render);
+inline MenuDrawParams MenuParams_ShallowCopy(MenuDrawParams *drawParams);
+
 /*
  * Struct for common menu fields
  */
@@ -30,33 +50,17 @@ typedef struct MainMenu {
   bool isVisible;
 } MainMenu;
 
-typedef struct MenuDrawParams {
-  Render *render;
-  Vector2 firstTextPos;
-  Vector2 *currentTextPos;
-
-  const char *textToDraw;
-  int fontSize;
-
-  Color rectColor;
-  Color textColor;
-
-  void (*onCollisionFn)(Render *render);
-
-  bool isLastToDraw;
-} MenuDrawParams;
-
 MainMenu Menu_Init();
 void Menu_Update(Render *render);
 void Menu_Draw(Render *render);
 void Menu_DrawDebug(Render *render);
 
-void Menu_DrawTextDefault(MenuDrawParams drawParams);
+void Menu_DrawText(MenuDrawParams *drawParams);
 
-void Menu_DrawText(MenuDrawParams drawParams);
+void Menu_OnCollPauseRender(Render *render);
 
-static void __Init_2D_Mode(Render *render);
-static void __Init_3D_Mode(Render *render);
-static void __Close_Window(Render *render);
+static void __OnCollInit2DMode(Render *render);
+static void __OnCollInit3DMode(Render *render);
+static void __OnCollCloseWindow(Render *render);
 
 #endif

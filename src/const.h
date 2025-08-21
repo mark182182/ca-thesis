@@ -17,7 +17,13 @@ extern bool DEBUG_MODE;
 // to omit it (would only be useable in some cases, e.g. when the a specified
 // value has to be passed of the given enum type to state the intent)
 
-enum { SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 720, FPS_CAP = 60, FONT_SIZE = 32 };
+enum {
+  SCREEN_WIDTH = 1280,
+  SCREEN_HEIGHT = 720,
+  FPS_CAP = 60,
+  MAIN_FONT_SIZE = 32,
+  SUB_FONT_SIZE = 24
+};
 
 // thread related defaults
 extern const LPSECURITY_ATTRIBUTES THREAD_DEFAULT_SEC_ATTRIBUTES;
@@ -28,8 +34,8 @@ extern const bool THREAD_DEFAULT_WAIT_FOR_ALL;
 extern const LPDWORD THREAD_DEFAULT_WAIT_MS;
 
 // raylib related defaults
-extern const Color RECT_COLOR;
-extern const Color TEXT_COLOR;
+extern const Color DEFAULT_RECT_COLOR;
+extern const Color DEFAULT_TEXT_COLOR;
 extern const Color RANDOM_COLORS[24];
 
 /**

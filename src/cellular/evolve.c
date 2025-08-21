@@ -21,8 +21,13 @@ void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive) {
       c2d->positionsY[i] = posY;
       c2d->colors[i] = &RANDOM_COLORS[rand() % 2];
       i++;
+
+      if (c2d->is_alive[i]) {
+        c2d->aliveCells++;
+      }
     }
   }
+  c2d->aliveCells = 0;
 }
 
 void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive) {
@@ -44,6 +49,7 @@ void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive) {
       }
     }
   }
+  c3d->aliveCells = 0;
 }
 
 // TODO: use a compute shader instead, if needed (since OpenGL 4.3)
