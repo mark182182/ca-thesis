@@ -14,10 +14,19 @@ typedef enum RenderMode {
   MAX_RENDER_MODE
 } RenderMode;
 
+/**
+ * Alignment of the current element based on the previous one
+ */
+typedef enum MenuDrawAlignment {
+  MENU_DRAW_ALIGNMENT_HORIZONTAL,
+  MENU_DRAW_ALIGNMENT_VERTICAL
+} MenuDrawAlignment;
+
 typedef struct MenuDrawParams {
   Render *render;
   Vector2 firstTextPos;
   Vector2 *currentTextPos;
+  MenuDrawAlignment alignment;
 
   const char *textToDraw;
   int fontSize;

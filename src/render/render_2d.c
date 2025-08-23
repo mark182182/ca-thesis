@@ -28,7 +28,8 @@ Render2D Render2D_Init(Render *render) {
                        .firstC2d = {0},
                        .secondC2d = {0},
                        .render2DSpeed = 0.4f,
-                       .currentGeneration = 0};
+                       .currentGeneration = 0,
+                       .gridDensity = CELL_INITIAL_GRID_DENSITY};
   return render2d;
 }
 
@@ -119,6 +120,14 @@ void Render2D_RenderMode(Render *render) {
   Arena_Free(&render->frame2DArena);
 
   // TODO: Check, if the mode changed, then free the modeArena
+}
+
+void Render2D_IncrementGridDensity(Render *render) {
+  render->render2d->gridDensity++;
+}
+
+void Render2D_DecrementGridDensity(Render *render) {
+  render->render2d->gridDensity--;
 }
 
 void Render2D_ResetCells(Render *render) {

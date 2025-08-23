@@ -102,6 +102,26 @@ void Menu2D_Draw(Render *render) {
     pauseParams.onCollisionFn = Menu_OnCollPauseRender;
     Menu_DrawText(&pauseParams);
 
+    char gridDensityText[32];
+    snprintf(gridDensityText, sizeof(gridDensityText), "Grid density: %d",
+             render->render2d->gridDensity);
+
+    MenuDrawParams gridDensityParams = MenuParams_ShallowCopy(&commonParams);
+    gridDensityParams.textToDraw = gridDensityText;
+    Menu_DrawText(&gridDensityParams);
+
+    MenuDrawParams densitySubParams = MenuParams_ShallowCopy(&commonParams);
+    densitySubParams.textToDraw = " [-]";
+    densitySubParams.alignment = MENU_DRAW_ALIGNMENT_HORIZONTAL;
+    densitySubParams.onCollisionFn = Render2D_DecrementGridDensity;
+    Menu_DrawText(&densitySubParams);
+
+    MenuDrawParams densityPlusParams = MenuParams_ShallowCopy(&commonParams);
+    densityPlusParams.textToDraw = " [+]";
+    densityPlusParams.alignment = MENU_DRAW_ALIGNMENT_HORIZONTAL;
+    densityPlusParams.onCollisionFn = Render2D_IncrementGridDensity;
+    Menu_DrawText(&densityPlusParams);
+
     MenuDrawParams resetParams = MenuParams_ShallowCopy(&commonParams);
     resetParams.textToDraw = "Reset cells";
     resetParams.onCollisionFn = Render2D_ResetCells;

@@ -10,6 +10,7 @@
 
 MenuDrawParams MenuParams_InitWithDefaults(Render *render) {
   return (MenuDrawParams){.render = render,
+                          .alignment = MENU_DRAW_ALIGNMENT_VERTICAL,
                           .fontSize = MAIN_FONT_SIZE,
                           .rectColor = DEFAULT_RECT_COLOR,
                           .textColor = DEFAULT_TEXT_COLOR,
@@ -20,6 +21,7 @@ MenuDrawParams MenuParams_ShallowCopy(MenuDrawParams *drawParams) {
   return (MenuDrawParams){.render = drawParams->render,
                           .firstTextPos = drawParams->firstTextPos,
                           .currentTextPos = drawParams->currentTextPos,
+                          .alignment = drawParams->alignment,
                           .textToDraw = drawParams->textToDraw,
                           .fontSize = drawParams->fontSize,
                           .font = drawParams->font,
@@ -112,8 +114,25 @@ void Menu_DrawText(MenuDrawParams *drawParams) {
   Vector2 textLength = MeasureTextEx(drawParams->font, drawParams->textToDraw,
                                      drawParams->fontSize, 0);
 
-  Rectangle textRect = {.x = drawParams->firstTextPos.x,
-                        .y = drawParams->currentTextPos->y,
+  Vector2 textRectPosition;
+  Vector2 positionToDraw;
+  if (MENU_DRAW_ALIGNMENT_VERTICAL == drawParams->alignment) {
+    textRectPosition = (Vector2){.x = drawParams->firstTextPos.x,
+                                 .y = drawParams->currentTextPos->y};
+
+    positionToDraw = (Vector2){.x = drawParams->firstTextPos.x,
+                               .y = drawParams->currentTextPos->y};
+
+  } else if (MENU_DRAW_ALIGNMENT_HORIZONTAL == drawParams->alignment) {
+    textRectPosition = (Vector2){.x = drawParams->currentTextPos->x,
+                                 .y = drawParams->currentTextPos->y};
+
+    positionToDraw = (Vector2){.x = 50,
+                               .y = 50};
+  }
+
+  Rectangle textRect = {.x = textRectPosition.x,
+                        .y = textRectPosition.y,
                         .width = textLength.x,
                         .height = textLength.y};
 
@@ -124,10 +143,8 @@ void Menu_DrawText(MenuDrawParams *drawParams) {
   }
 
   DrawRectangleRec(textRect, currentRectColor);
-  Vector2 position = {.x = drawParams->firstTextPos.x,
-                      .y = drawParams->currentTextPos->y};
   DrawTextEx(drawParams->render->menu->selectedFont, drawParams->textToDraw,
-             position, drawParams->fontSize, 0, drawParams->textColor);
+             positionToDraw, drawParams->fontSize, 0, drawParams->textColor);
 
   drawParams->currentTextPos->x += textLength.x;
   drawParams->currentTextPos->y += textLength.y;

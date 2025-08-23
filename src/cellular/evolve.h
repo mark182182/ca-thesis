@@ -24,8 +24,6 @@ typedef enum Evolve2DParams {
 typedef enum Evolve3DParams {
   UNDERPOPULATION_UPPER_CAP_3D = 4,
   OVERPOPULATION_UPPER_CAP_3D = 5
-  //  UNDERPOPULATION_UPPER_CAP_3D = 2,
-  //  OVERPOPULATION_UPPER_CAP_3D = 3
 } Evolve3DParams;
 
 /*

@@ -20,11 +20,14 @@ typedef struct Render2D {
   // higher values mean slower updates
   float render2DSpeed;
   int currentGeneration;
+  int gridDensity;
 } Render2D;
 
 Render2D Render2D_Init(Render *render);
 void Render2D_RenderMode(Render *render);
 
+void Render2D_IncrementGridDensity(Render *render);
+void Render2D_DecrementGridDensity(Render *render);
 void Render2D_ResetCells(Render *render);
 void Render2D_RandomizeZeroGen(Render *render);
 

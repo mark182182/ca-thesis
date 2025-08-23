@@ -99,7 +99,8 @@
     "raylib_shim.h": "c",
     "win32_clipboard.h": "c",
     "string.h": "c",
-    "common.h": "c"
+    "common.h": "c",
+    "render_2d.h": "c"
   },
   // Disable GitHub Copilot for C files
   "github.copilot.enable": {
