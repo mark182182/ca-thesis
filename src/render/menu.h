@@ -22,26 +22,41 @@ typedef enum MenuDrawAlignment {
   MENU_DRAW_ALIGNMENT_VERTICAL
 } MenuDrawAlignment;
 
-typedef struct MenuDrawParams {
-  Render *render;
-  Vector2 firstTextPos;
-  Vector2 *currentTextPos;
-  MenuDrawAlignment alignment;
-
+typedef struct MenuDrawItem {
   const char *textToDraw;
-  int fontSize;
 
   Font font;
+  int fontSize;
+
   Color rectColor;
   Color textColor;
 
-  bool shouldCollide;
+  // the first text in the given menu = the first element in the MenuDrawParams
+  // invocation chain
+  MenuDrawAlignment alignment;
+
   void (*onCollisionFn)(Render *render);
-} MenuDrawParams;
+} MenuDrawItem;
 
 // NOTE: __may__ be inlined at call sites
-inline MenuDrawParams MenuParams_InitWithDefaults(Render *render);
-inline MenuDrawParams MenuParams_ShallowCopy(MenuDrawParams *drawParams);
+inline MenuDrawItem MenuDrawItem_InitWithDefaults(Render *render);
+inline MenuDrawItem MenuDrawItem_ShallowCopy(MenuDrawItem *drawParams);
+
+typedef struct MenuDrawParams {
+  Render *render;
+
+  Vector2 startingTextPos;
+  MenuDrawItem *items;
+  int numOfItems;
+
+  // iterator (or cursor in other names, but it would might mean the mouse
+  // cursor, so iterator is used instead) that holds the current position
+  Vector2 iteratorPosStart;
+  Vector2 iteratorPosEnd;
+
+} MenuDrawParams;
+
+inline MenuDrawParams MenuDrawParams_InitWithDefaults(Render *render);
 
 /*
  * Struct for common menu fields

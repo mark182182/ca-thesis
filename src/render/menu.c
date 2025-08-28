@@ -7,27 +7,34 @@
 #include <string.h>
 #include <stdbool.h>
 #include "render.h"
+#include "common.h"
 
-MenuDrawParams MenuParams_InitWithDefaults(Render *render) {
-  return (MenuDrawParams){.render = render,
-                          .alignment = MENU_DRAW_ALIGNMENT_VERTICAL,
-                          .fontSize = MAIN_FONT_SIZE,
-                          .rectColor = DEFAULT_RECT_COLOR,
-                          .textColor = DEFAULT_TEXT_COLOR,
-                          .font = render->menu->selectedFont,
-                          .onCollisionFn = NULL};
+MenuDrawItem MenuDrawItem_InitWithDefaults(Render *render) {
+  return (MenuDrawItem){.alignment = MENU_DRAW_ALIGNMENT_VERTICAL,
+                        .fontSize = MAIN_FONT_SIZE,
+                        .rectColor = DEFAULT_RECT_COLOR,
+                        .textColor = DEFAULT_TEXT_COLOR,
+                        .font = render->menu->selectedFont,
+                        .onCollisionFn = NULL};
 }
-MenuDrawParams MenuParams_ShallowCopy(MenuDrawParams *drawParams) {
-  return (MenuDrawParams){.render = drawParams->render,
-                          .firstTextPos = drawParams->firstTextPos,
-                          .currentTextPos = drawParams->currentTextPos,
-                          .alignment = drawParams->alignment,
-                          .textToDraw = drawParams->textToDraw,
-                          .fontSize = drawParams->fontSize,
-                          .font = drawParams->font,
-                          .rectColor = drawParams->rectColor,
-                          .textColor = drawParams->textColor,
-                          .onCollisionFn = drawParams->onCollisionFn};
+
+MenuDrawItem MenuDrawItem_ShallowCopy(MenuDrawItem *drawParams) {
+  return (MenuDrawItem){.alignment = drawParams->alignment,
+                        .textToDraw = drawParams->textToDraw,
+                        .fontSize = drawParams->fontSize,
+                        .font = drawParams->font,
+                        .rectColor = drawParams->rectColor,
+                        .textColor = drawParams->textColor,
+                        .onCollisionFn = drawParams->onCollisionFn};
+}
+
+MenuDrawParams MenuDrawParams_InitWithDefaults(Render *render) {
+  return (MenuDrawParams){.render = render,
+                          .startingTextPos = Vector2_Zeroed(),
+                          .items = {0},
+                          .numOfItems = 0,
+                          .iteratorPosStart = Vector2_Zeroed(),
+                          .iteratorPosEnd = Vector2_Zeroed()};
 }
 
 MainMenu Menu_Init() {
@@ -55,38 +62,39 @@ void Menu_Draw(Render *render) {
       .x = (SCREEN_WIDTH / 2) - (MAIN_FONT_SIZE * centerRatio),
       .y = (SCREEN_HEIGHT / 2) - (MAIN_FONT_SIZE * centerRatio)};
   Vector2 longestTextLength = {.x = 0, .y = 0};
-  Vector2 currentTextPos = {.x = firstTextPos.x, .y = firstTextPos.y};
 
-  MenuDrawParams commonParams = MenuParams_InitWithDefaults(render);
-  commonParams.firstTextPos = firstTextPos;
-  commonParams.currentTextPos = &currentTextPos;
-
-  MenuDrawParams mode2DParams = MenuParams_ShallowCopy(&commonParams);
+  MenuDrawItem mode2DItem = MenuDrawItem_InitWithDefaults(render);
   // NOTE: usually there should be an existing dictionary that contains the user
   // facing texts/messages to draw instead of hard-coding them
-  mode2DParams.textToDraw = "2D Mode";
-  mode2DParams.onCollisionFn = __OnCollInit2DMode;
-  Menu_DrawText(&mode2DParams);
+  mode2DItem.textToDraw = "2D Mode";
+  mode2DItem.onCollisionFn = __OnCollInit2DMode;
 
-  MenuDrawParams mode3DParams = MenuParams_ShallowCopy(&commonParams);
-  mode3DParams.textToDraw = "3D Mode";
-  mode3DParams.onCollisionFn = __OnCollInit3DMode;
-  Menu_DrawText(&mode3DParams);
+  MenuDrawItem mode3DItem = MenuDrawItem_InitWithDefaults(render);
+  mode3DItem.textToDraw = "3D Mode";
+  mode3DItem.onCollisionFn = __OnCollInit3DMode;
 
-  MenuDrawParams settingsParams = MenuParams_ShallowCopy(&commonParams);
-  settingsParams.textToDraw = "Settings";
-  Menu_DrawText(&settingsParams);
+  MenuDrawItem settingsItem = MenuDrawItem_InitWithDefaults(render);
+  settingsItem.textToDraw = "Settings";
 
-  MenuDrawParams exitParams = MenuParams_ShallowCopy(&commonParams);
-  exitParams.textToDraw = "Exit";
-  exitParams.onCollisionFn = __OnCollCloseWindow;
-  Menu_DrawText(&exitParams);
+  MenuDrawItem exitItem = MenuDrawItem_InitWithDefaults(render);
+  exitItem.textToDraw = "Exit";
+  exitItem.onCollisionFn = __OnCollCloseWindow;
+
+  // NOTE: could be better, if it was possible to initialize all of these items
+  // here instead of creating and assigning them separately
+  MenuDrawItem items[] = {mode2DItem, mode3DItem, settingsItem, exitItem};
+
+  MenuDrawParams drawParams = MenuDrawParams_InitWithDefaults(render);
+  drawParams.startingTextPos = firstTextPos;
+  drawParams.items = items;
+  drawParams.numOfItems = sizeof(items) / sizeof(items[0]);
+
+  Menu_DrawText(&drawParams);
 }
 
 void Menu_DrawDebug(Render *render) {
   Vector2 firstTextPos = {.x = 10, .y = 40};
   Vector2 longestTextLength = {.x = 0, .y = 0};
-  Vector2 currentTextPos = {.x = firstTextPos.x, .y = firstTextPos.y};
 
   // TODO: Revise this, only a temp solution
   char fpsText[16];
@@ -96,58 +104,73 @@ void Menu_DrawDebug(Render *render) {
   snprintf(frameTimeText, sizeof(frameTimeText), "Frametime: %0.8f",
            GetFrameTime());
 
-  MenuDrawParams commonParams = MenuParams_InitWithDefaults(render);
-  commonParams.firstTextPos = firstTextPos;
-  commonParams.currentTextPos = &currentTextPos;
+  MenuDrawItem fpsItem = MenuDrawItem_InitWithDefaults(render);
+  fpsItem.textToDraw = fpsText;
 
-  MenuDrawParams fpsParams = MenuParams_ShallowCopy(&commonParams);
-  fpsParams.textToDraw = fpsText;
-  Menu_DrawText(&fpsParams);
+  MenuDrawItem frameTimeItem = MenuDrawItem_InitWithDefaults(render);
+  frameTimeItem.textToDraw = frameTimeText;
 
-  MenuDrawParams frameTimeParams = MenuParams_ShallowCopy(&commonParams);
-  frameTimeParams.textToDraw = frameTimeText;
-  Menu_DrawText(&frameTimeParams);
+  MenuDrawItem items[] = {fpsItem, frameTimeItem};
+
+  MenuDrawParams drawParams = MenuDrawParams_InitWithDefaults(render);
+  drawParams.startingTextPos = firstTextPos;
+  drawParams.items = items;
+  drawParams.numOfItems = sizeof(items) / sizeof(items[0]);
+
+  Menu_DrawText(&drawParams);
 }
 
 void Menu_DrawText(MenuDrawParams *drawParams) {
-  Color currentRectColor = drawParams->rectColor;
-  Vector2 textLength = MeasureTextEx(drawParams->font, drawParams->textToDraw,
-                                     drawParams->fontSize, 0);
 
-  Vector2 textRectPosition;
-  Vector2 positionToDraw;
-  if (MENU_DRAW_ALIGNMENT_VERTICAL == drawParams->alignment) {
-    textRectPosition = (Vector2){.x = drawParams->firstTextPos.x,
-                                 .y = drawParams->currentTextPos->y};
+  for (int i = 0; i < drawParams->numOfItems; i++) {
+    MenuDrawItem item = drawParams->items[i];
 
-    positionToDraw = (Vector2){.x = drawParams->firstTextPos.x,
-                               .y = drawParams->currentTextPos->y};
+    Color currentRectColor = item.rectColor;
+    Vector2 textLength =
+        MeasureTextEx(item.font, item.textToDraw, item.fontSize, 0);
 
-  } else if (MENU_DRAW_ALIGNMENT_HORIZONTAL == drawParams->alignment) {
-    textRectPosition = (Vector2){.x = drawParams->currentTextPos->x,
-                                 .y = drawParams->currentTextPos->y};
+    if (i == 0) {
+      drawParams->iteratorPosStart.x = drawParams->startingTextPos.x;
+      drawParams->iteratorPosStart.y = drawParams->startingTextPos.y;
+    } else {
+      drawParams->iteratorPosStart.x = drawParams->startingTextPos.x;
+      drawParams->iteratorPosStart.y = drawParams->iteratorPosEnd.y;
+    }
+    // TODO: handle vertical alignment
 
-    positionToDraw = (Vector2){.x = 50,
-                               .y = 50};
+    //  vertically we use the start y position
+    //  [|]_____| should be at the start of the current text
+    //  horizontally we use the end x position
+    //  |______[|] should be at the end of the current text
+    Vector2 posToDraw;
+    if (item.alignment == MENU_DRAW_ALIGNMENT_VERTICAL) {
+      posToDraw = drawParams->iteratorPosStart;
+    } else if (item.alignment == MENU_DRAW_ALIGNMENT_HORIZONTAL) {
+      posToDraw = drawParams->iteratorPosEnd;
+      // TODO: fix this, not working properly
+      // make sure we stay on the same y value, if we are drawing horizontally
+      posToDraw.y = drawParams->iteratorPosStart.y - textLength.y;
+    }
+
+    Rectangle textRect = {.x = posToDraw.x,
+                          .y = posToDraw.y,
+                          .width = textLength.x,
+                          .height = textLength.y};
+
+    if (item.onCollisionFn != NULL &&
+        CheckCollisionPointRec(GetMousePosition(), textRect)) {
+      currentRectColor = DARKGRAY;
+      item.onCollisionFn(drawParams->render);
+    }
+    DrawRectangleRec(textRect, currentRectColor);
+    DrawTextEx(item.font, item.textToDraw, posToDraw, item.fontSize, 0,
+               item.textColor);
+
+    drawParams->iteratorPosEnd.x =
+        drawParams->iteratorPosStart.x + textLength.x;
+    drawParams->iteratorPosEnd.y =
+        drawParams->iteratorPosStart.y + textLength.y;
   }
-
-  Rectangle textRect = {.x = textRectPosition.x,
-                        .y = textRectPosition.y,
-                        .width = textLength.x,
-                        .height = textLength.y};
-
-  if (drawParams->onCollisionFn != NULL &&
-      CheckCollisionPointRec(GetMousePosition(), textRect)) {
-    currentRectColor = DARKGRAY;
-    drawParams->onCollisionFn(drawParams->render);
-  }
-
-  DrawRectangleRec(textRect, currentRectColor);
-  DrawTextEx(drawParams->render->menu->selectedFont, drawParams->textToDraw,
-             positionToDraw, drawParams->fontSize, 0, drawParams->textColor);
-
-  drawParams->currentTextPos->x += textLength.x;
-  drawParams->currentTextPos->y += textLength.y;
 }
 
 void Menu_OnCollPauseRender(Render *render) {

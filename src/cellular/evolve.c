@@ -7,12 +7,13 @@
 
 int rule1DBits = 0x00000000;
 
-void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive) {
+void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive,
+                              int gridDensity) {
   int i = 0;
   for (int posX = 0; posX < SCREEN_WIDTH; posX += CELL_WIDTH_RATIO) {
     for (int posY = 0; posY < SCREEN_HEIGHT; posY += CELL_HEIGHT_RATIO) {
       if (randomizeAlive) {
-        bool is_alive = rand() % CELL_INITIAL_GRID_DENSITY == 0;
+        bool is_alive = rand() % gridDensity == 0;
         c2d->is_alive[i] = is_alive;
       } else {
         c2d->is_alive[i] = 0;

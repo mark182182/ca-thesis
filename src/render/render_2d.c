@@ -46,8 +46,9 @@ void Render2D_RenderMode(Render *render) {
 
     // TODO: Randomization should only be set, if the user clicks on the button
     // or similar
-    Evolve2D_InitializeCells(&render2d->firstC2d, false);
-    Evolve2D_InitializeCells(&render2d->secondC2d, false);
+    Evolve2D_InitializeCells(&render2d->firstC2d, false, render2d->gridDensity);
+    Evolve2D_InitializeCells(&render2d->secondC2d, false,
+                             render2d->gridDensity);
   }
 
   // would implement batched rendering, draw calls here
@@ -118,29 +119,34 @@ void Render2D_RenderMode(Render *render) {
 
   // free objects after each frame
   Arena_Free(&render->frame2DArena);
-
-  // TODO: Check, if the mode changed, then free the modeArena
 }
 
 void Render2D_IncrementGridDensity(Render *render) {
-  render->render2d->gridDensity++;
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    render->render2d->gridDensity++;
+  }
 }
 
 void Render2D_DecrementGridDensity(Render *render) {
-  render->render2d->gridDensity--;
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    render->render2d->gridDensity--;
+  }
 }
 
 void Render2D_ResetCells(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-    Evolve2D_InitializeCells(&render->render2d->firstC2d, false);
-    Evolve2D_InitializeCells(&render->render2d->secondC2d, false);
+    Evolve2D_InitializeCells(&render->render2d->firstC2d, false,
+                             render->render2d->gridDensity);
+    Evolve2D_InitializeCells(&render->render2d->secondC2d, false,
+                             render->render2d->gridDensity);
     render->render2d->currentGeneration = 0;
   }
 }
 
 void Render2D_RandomizeZeroGen(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-    Evolve2D_InitializeCells(&render->render2d->firstC2d, true);
+    Evolve2D_InitializeCells(&render->render2d->firstC2d, true,
+                             render->render2d->gridDensity);
     render->render2d->currentGeneration = 0;
   }
 }

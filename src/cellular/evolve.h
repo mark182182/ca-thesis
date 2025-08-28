@@ -43,7 +43,8 @@ typedef struct Evolve3DThreadCells {
  * Generate initial values (e.g. position, color) for each cells in the
  * grid, with optionally setting the alive state at random.
  */
-void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive);
+void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive,
+                              int gridDensity);
 /*
  *Same as in 2D
  */

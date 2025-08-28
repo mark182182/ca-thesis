@@ -73,7 +73,7 @@ if [[ "$*" == *"--compat"* ]]; then
 fi
 
 include_tests=""
-if [[ "$*" == *"--include-tests"* ]]; then
+if [[ "$*" == *"--tests"* ]]; then
     echo "Including tests in the build."
     include_tests="ON"
 fi
@@ -104,7 +104,6 @@ else
 fi
 
 if [[ "$include_tests" == "ON" ]]; then
-    # Run tests (excluding standalone)
     echo "Running tests..."
     cd build
     ctest --output-on-failure

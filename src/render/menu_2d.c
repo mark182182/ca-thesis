@@ -9,7 +9,7 @@
 
 /*
  * TODO: The menu should be rendered on the right hand side of the screen.
- * [ ] By default the menu should be in expanded mode with the ability to
+ * [x] By default the menu should be in expanded mode with the ability to
  * minimize it to a ≡ icon.
  * The menu should contain the following options:
  * [x] Display the current generation
@@ -22,10 +22,13 @@
  * Lua?)
  */
 void Menu2D_Draw(Render *render) {
+  char *minimizeText = "=Max=";
+
   if (render->render2d->menu2d.isVisible) {
     // NOTE: ideally this should be dynamically set based on the screen size in
     // order to accommodate smaller/larger displays
     float screenDivRatio = 3.5F;
+    minimizeText = "=Min=";
 
     // draw a container on the right hand side of the screen
     Rectangle containerRect = {
@@ -41,116 +44,107 @@ void Menu2D_Draw(Render *render) {
 
     Vector2 firstTextPos = {.x = SCREEN_WIDTH - (SCREEN_WIDTH / screenDivRatio),
                             .y = 0};
-    Vector2 currentTextPos = {.x = firstTextPos.x, .y = firstTextPos.y};
 
-    MenuDrawParams commonParams = MenuParams_InitWithDefaults(render);
-    commonParams.render = render;
-    commonParams.fontSize = SUB_FONT_SIZE;
-    commonParams.firstTextPos = firstTextPos;
-    commonParams.currentTextPos = &currentTextPos;
+    MenuDrawItem commonDrawItem = MenuDrawItem_InitWithDefaults(render);
+    commonDrawItem.fontSize = SUB_FONT_SIZE;
 
     // NOTE: revise this, only temp solution
-    MenuDrawParams statusParams = MenuParams_ShallowCopy(&commonParams);
-    statusParams.textToDraw = "==Status==";
-    Menu_DrawText(&statusParams);
+    MenuDrawItem statusItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    statusItem.textToDraw = "==Status==";
 
-    MenuDrawParams blankParams = MenuParams_ShallowCopy(&commonParams);
-    blankParams.textToDraw = " ";
-    Menu_DrawText(&blankParams);
+    MenuDrawItem blankItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    blankItem.textToDraw = " ";
 
     char render2DSpeedText[32];
-    snprintf(render2DSpeedText, sizeof(render2DSpeedText), "Render speed: %.3f",
-             render->render2d->render2DSpeed);
+    snprintf(render2DSpeedText, sizeof(render2DSpeedText),
+             "Render speed: % .3f", render->render2d->render2DSpeed);
 
-    MenuDrawParams renderSpeedParams = MenuParams_ShallowCopy(&commonParams);
-    renderSpeedParams.textToDraw = render2DSpeedText;
-    Menu_DrawText(&renderSpeedParams);
+    MenuDrawItem renderSpeedItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    renderSpeedItem.textToDraw = render2DSpeedText;
 
-    MenuDrawParams ruleParams = MenuParams_ShallowCopy(&commonParams);
-    ruleParams.textToDraw = "Current rule: Game of Life";
-    Menu_DrawText(&ruleParams);
+    MenuDrawItem ruleItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    ruleItem.textToDraw = "Current rule: Game of Life";
 
     char currGenText[32];
     snprintf(currGenText, sizeof(currGenText), "Current generation: %d",
              render->render2d->currentGeneration);
 
-    MenuDrawParams currGenParams = MenuParams_ShallowCopy(&commonParams);
-    currGenParams.textToDraw = currGenText;
-    Menu_DrawText(&currGenParams);
+    MenuDrawItem currGenItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    currGenItem.textToDraw = currGenText;
 
     char aliveCellsText[32];
     snprintf(aliveCellsText, sizeof(aliveCellsText),
              "Alive current gen cells: %d",
              render->render2d->firstC2d.aliveCells);
 
-    MenuDrawParams aliveCellsParams = MenuParams_ShallowCopy(&commonParams);
-    aliveCellsParams.textToDraw = aliveCellsText;
-    Menu_DrawText(&aliveCellsParams);
+    MenuDrawItem aliveCellsItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    aliveCellsItem.textToDraw = aliveCellsText;
 
     char pauseText[32];
     snprintf(pauseText, sizeof(currGenText), "Pause state: %s",
              boolToString(render->isPaused));
 
-    MenuDrawParams controlParams = MenuParams_ShallowCopy(&commonParams);
-    controlParams.textToDraw = "==Controls==";
-    Menu_DrawText(&controlParams);
+    MenuDrawItem controlItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    controlItem.textToDraw = "==Controls==";
 
-    Menu_DrawText(&blankParams);
-
-    MenuDrawParams pauseParams = MenuParams_ShallowCopy(&commonParams);
-    pauseParams.textToDraw = pauseText;
-    pauseParams.onCollisionFn = Menu_OnCollPauseRender;
-    Menu_DrawText(&pauseParams);
+    MenuDrawItem pauseItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    pauseItem.textToDraw = pauseText;
+    pauseItem.onCollisionFn = Menu_OnCollPauseRender;
 
     char gridDensityText[32];
     snprintf(gridDensityText, sizeof(gridDensityText), "Grid density: %d",
              render->render2d->gridDensity);
 
-    MenuDrawParams gridDensityParams = MenuParams_ShallowCopy(&commonParams);
-    gridDensityParams.textToDraw = gridDensityText;
-    Menu_DrawText(&gridDensityParams);
+    MenuDrawItem gridDensityItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    gridDensityItem.textToDraw = gridDensityText;
 
-    MenuDrawParams densitySubParams = MenuParams_ShallowCopy(&commonParams);
-    densitySubParams.textToDraw = " [-]";
-    densitySubParams.alignment = MENU_DRAW_ALIGNMENT_HORIZONTAL;
-    densitySubParams.onCollisionFn = Render2D_DecrementGridDensity;
-    Menu_DrawText(&densitySubParams);
+    MenuDrawItem densitySubItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    densitySubItem.textToDraw = " [-]";
+    densitySubItem.alignment = MENU_DRAW_ALIGNMENT_HORIZONTAL;
+    densitySubItem.onCollisionFn = Render2D_DecrementGridDensity;
 
-    MenuDrawParams densityPlusParams = MenuParams_ShallowCopy(&commonParams);
-    densityPlusParams.textToDraw = " [+]";
-    densityPlusParams.alignment = MENU_DRAW_ALIGNMENT_HORIZONTAL;
-    densityPlusParams.onCollisionFn = Render2D_IncrementGridDensity;
-    Menu_DrawText(&densityPlusParams);
+    MenuDrawItem densityPlusItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    densityPlusItem.textToDraw = " [+]";
+    densityPlusItem.alignment = MENU_DRAW_ALIGNMENT_HORIZONTAL;
+    densityPlusItem.onCollisionFn = Render2D_IncrementGridDensity;
 
-    MenuDrawParams resetParams = MenuParams_ShallowCopy(&commonParams);
-    resetParams.textToDraw = "Reset cells";
-    resetParams.onCollisionFn = Render2D_ResetCells;
-    Menu_DrawText(&resetParams);
+    MenuDrawItem resetItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    resetItem.textToDraw = "Reset cells";
+    resetItem.onCollisionFn = Render2D_ResetCells;
 
-    MenuDrawParams randFirstGenParams = MenuParams_ShallowCopy(&commonParams);
-    randFirstGenParams.textToDraw = "Randomize 0st gen";
-    randFirstGenParams.onCollisionFn = Render2D_RandomizeZeroGen;
-    Menu_DrawText(&randFirstGenParams);
-  }
+    MenuDrawItem randFirstGenItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    randFirstGenItem.textToDraw = "Randomize 0st gen";
+    randFirstGenItem.onCollisionFn = Render2D_RandomizeZeroGen;
 
-  char *minimizeText = "=Min=";
-  if (!render->render2d->menu2d.isVisible) {
-    minimizeText = "=Max=";
+    MenuDrawItem items[] = {statusItem,      blankItem,       renderSpeedItem,
+                            ruleItem,        currGenItem,     aliveCellsItem,
+                            controlItem,     blankItem,       pauseItem,
+                            gridDensityItem, densitySubItem,  densityPlusItem,
+                            resetItem,       randFirstGenItem};
+
+    MenuDrawParams drawParams = MenuDrawParams_InitWithDefaults(render);
+    drawParams.startingTextPos = firstTextPos;
+    drawParams.items = items;
+    drawParams.numOfItems = sizeof(items) / sizeof(items[0]);
+
+    Menu_DrawText(&drawParams);
   }
 
   int minimizeTextSize = MeasureText(minimizeText, SUB_FONT_SIZE);
   Vector2 minimizeTextPos = {.x = SCREEN_WIDTH - minimizeTextSize, .y = 0};
-  Vector2 minimizeCurrentTextPos = {.x = minimizeTextPos.x,
-                                    .y = minimizeTextPos.y};
 
-  MenuDrawParams minimizeParams = MenuParams_InitWithDefaults(render);
-  minimizeParams.render = render;
-  minimizeParams.fontSize = SUB_FONT_SIZE;
-  minimizeParams.firstTextPos = minimizeTextPos;
-  minimizeParams.currentTextPos = &minimizeCurrentTextPos;
-  minimizeParams.textToDraw = minimizeText;
-  minimizeParams.onCollisionFn = __ToggleMinimize2DMenu;
-  Menu_DrawText(&minimizeParams);
+  MenuDrawItem minimizeItem = MenuDrawItem_InitWithDefaults(render);
+  minimizeItem.fontSize = SUB_FONT_SIZE;
+  minimizeItem.textToDraw = minimizeText;
+  minimizeItem.onCollisionFn = __ToggleMinimize2DMenu;
+
+  MenuDrawItem minimItems[] = {minimizeItem};
+
+  MenuDrawParams drawMinimizeParams = MenuDrawParams_InitWithDefaults(render);
+  drawMinimizeParams.startingTextPos = minimizeTextPos;
+  drawMinimizeParams.items = minimItems;
+  drawMinimizeParams.numOfItems = sizeof(minimItems) / sizeof(minimItems[0]);
+  Menu_DrawText(&drawMinimizeParams);
 }
 
 static void __ToggleMinimize2DMenu(Render *render) {
