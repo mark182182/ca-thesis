@@ -122,13 +122,15 @@ void Render2D_RenderMode(Render *render) {
 }
 
 void Render2D_IncrementGridDensity(Render *render) {
-  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) &&
+      render->render2d->gridDensity < 20) {
     render->render2d->gridDensity++;
   }
 }
 
 void Render2D_DecrementGridDensity(Render *render) {
-  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) &&
+      render->render2d->gridDensity > 0) {
     render->render2d->gridDensity--;
   }
 }

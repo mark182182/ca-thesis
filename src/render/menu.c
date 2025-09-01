@@ -133,24 +133,20 @@ void Menu_DrawText(MenuDrawParams *drawParams) {
       drawParams->iteratorPosStart.x = drawParams->startingTextPos.x;
       drawParams->iteratorPosStart.y = drawParams->startingTextPos.y;
     } else {
-      drawParams->iteratorPosStart.x = drawParams->startingTextPos.x;
-      drawParams->iteratorPosStart.y = drawParams->iteratorPosEnd.y;
+      if (item.alignment == MENU_DRAW_ALIGNMENT_VERTICAL) {
+        // all vertical items should be in the same column
+        drawParams->iteratorPosStart.x = drawParams->startingTextPos.x;
+        // start drawing from the previous text's end vertically
+        drawParams->iteratorPosStart.y = drawParams->iteratorPosEnd.y;
+      } else if (item.alignment == MENU_DRAW_ALIGNMENT_HORIZONTAL) {
+        // start drawing from the previous text's end horizontally
+        drawParams->iteratorPosStart.x = drawParams->iteratorPosEnd.x;
+      }
     }
-    // TODO: handle vertical alignment
 
-    //  vertically we use the start y position
-    //  [|]_____| should be at the start of the current text
-    //  horizontally we use the end x position
-    //  |______[|] should be at the end of the current text
-    Vector2 posToDraw;
-    if (item.alignment == MENU_DRAW_ALIGNMENT_VERTICAL) {
-      posToDraw = drawParams->iteratorPosStart;
-    } else if (item.alignment == MENU_DRAW_ALIGNMENT_HORIZONTAL) {
-      posToDraw = drawParams->iteratorPosEnd;
-      // TODO: fix this, not working properly
-      // make sure we stay on the same y value, if we are drawing horizontally
-      posToDraw.y = drawParams->iteratorPosStart.y - textLength.y;
-    }
+    // always draw the current text based on the iterator's start position (that
+    // should be resolved at this point)
+    Vector2 posToDraw = drawParams->iteratorPosStart;
 
     Rectangle textRect = {.x = posToDraw.x,
                           .y = posToDraw.y,

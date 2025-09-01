@@ -92,19 +92,19 @@ void Menu2D_Draw(Render *render) {
     pauseItem.onCollisionFn = Menu_OnCollPauseRender;
 
     char gridDensityText[32];
-    snprintf(gridDensityText, sizeof(gridDensityText), "Grid density: %d",
+    snprintf(gridDensityText, sizeof(gridDensityText), "Grid density: %d ",
              render->render2d->gridDensity);
 
     MenuDrawItem gridDensityItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     gridDensityItem.textToDraw = gridDensityText;
 
     MenuDrawItem densitySubItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
-    densitySubItem.textToDraw = " [-]";
+    densitySubItem.textToDraw = "[-]";
     densitySubItem.alignment = MENU_DRAW_ALIGNMENT_HORIZONTAL;
     densitySubItem.onCollisionFn = Render2D_DecrementGridDensity;
 
     MenuDrawItem densityPlusItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
-    densityPlusItem.textToDraw = " [+]";
+    densityPlusItem.textToDraw = "[+]";
     densityPlusItem.alignment = MENU_DRAW_ALIGNMENT_HORIZONTAL;
     densityPlusItem.onCollisionFn = Render2D_IncrementGridDensity;
 
