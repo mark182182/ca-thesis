@@ -78,6 +78,7 @@ void Render2D_RenderMode(Render *render) {
 
   // TODO: This should be drawn in a single call
   int aliveCells = 0;
+  
   for (int i = 0; i < CELL_COUNT; i++) {
     Color color = *actualCd->colors[i];
     // TODO: Revise this, just an example

@@ -8,6 +8,7 @@ typedef struct Render3D {
   Camera3D camera;
   Mesh cube;
   Material matInstances;
+  Material matSelection;
   Matrix *transforms;
 
   Cells3D firstC3d;
@@ -16,7 +17,19 @@ typedef struct Render3D {
 
 } Render3D;
 
+typedef struct Render3DThreadCubes {
+  Cells3D *actualCd;
+  Camera *camera;
+  Mesh *cube;
+  Matrix *transforms;
+
+  int startIdx;
+  int endIdx;
+} Render3DThreadCubes;
+
 Render3D Render3D_Init(Render *render);
 void Render3D_RenderMode(Render *render);
+
+static void __Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes);
 
 #endif

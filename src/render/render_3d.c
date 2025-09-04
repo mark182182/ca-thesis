@@ -28,6 +28,7 @@ Render3D Render3D_Init(Render *render) {
   camera.projection = CAMERA_PERSPECTIVE;
 
   Mesh cube = GenMeshCube(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+  Mesh selectionCube = GenMeshCube(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
 
   // transforms to be uploaded to GPU for instances
   Matrix *transforms = Arena_AllocAlignedZeroed(&render->frame3DArena,
@@ -59,6 +60,9 @@ Render3D Render3D_Init(Render *render) {
   matInstances.shader = shader;
   matInstances.maps[MATERIAL_MAP_DIFFUSE].color = RED;
 
+  Material matSelection = LoadMaterialDefault();
+  matSelection.maps[MATERIAL_MAP_DIFFUSE].color = YELLOW;
+
   if (!IsMaterialValid(matInstances)) {
     printf("Invalid material with shader id: %d\n", matInstances.shader.id);
     exit(1);
@@ -73,6 +77,7 @@ Render3D Render3D_Init(Render *render) {
   Render3D render3d = {.camera = camera,
                        .cube = cube,
                        .matInstances = matInstances,
+                       .matSelection = matSelection,
                        .render3DSpeed = 0.4f,
                        .transforms = transforms};
   return render3d;
@@ -147,28 +152,50 @@ void Render3D_RenderMode(Render *render) {
                  &render->deltaTime, SHADER_UNIFORM_FLOAT);
   // TOOD: update the light shader here, if needed
 
+  // TODO: add the user input, so one can flip the is_alive flag for a given
+  // cell
   actualCd->aliveCells = 0;
-  for (int tIdx = 0; tIdx < CUBE_COUNT; tIdx++) {
-    bool is_alive = actualCd->is_alive[tIdx];
-    int x = actualCd->positionsX[tIdx];
-    int y = actualCd->positionsY[tIdx];
-    int z = actualCd->positionsZ[tIdx];
 
-    // since the arena is reset on every frame, we can just set the alive cells
-    if (is_alive) {
-      actualCd->aliveCells++;
-      Matrix translation = MatrixTranslate(x, y, z);
-      // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
+  // TODO: revise this, so it's not that highly coupled, if possible
+  bool isColliding = false;
+  Matrix collMatrix = {0};
 
-      Matrix scale = MatrixScale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
+  // TODO: fix the multi-threading issue
+  HANDLE threads[numOfProcessors];
+  Render3DThreadCubes *allThreadCubes = Arena_AllocAligned(
+      &render->frame3DArena, numOfProcessors * sizeof(Render3DThreadCubes),
+      DEFAULT_ARENA_ALIGNMENT);
 
-      // with no gaps between the cubes
-      Matrix mul = MatrixMultiply(translation, scale);
-      // with gaps
-      // Matrix mul = MatrixMultiply(scale, translation);
+  int chunkSizePerThread = CUBE_COUNT / numOfProcessors;
 
-      render->render3d->transforms[tIdx] = mul;
+  for (int i = 0; i < numOfProcessors; i++) {
+    allThreadCubes[i] =
+        (Render3DThreadCubes){.actualCd = actualCd,
+                              .camera = &render->render3d->camera,
+                              .cube = &render->render3d->cube,
+                              .transforms = render->render3d->transforms,
+                              .startIdx = i * chunkSizePerThread,
+                              .endIdx = (i + 1) * chunkSizePerThread};
+    if (i == numOfProcessors - 1) {
+      allThreadCubes[i].endIdx = CUBE_COUNT;
     }
+
+    threads[i] =
+        CreateThread(THREAD_DEFAULT_SEC_ATTRIBUTES, THREAD_DEFAULT_STACK_SIZE,
+                     __Render3D_ResolveTransformMatrix, &allThreadCubes[i],
+                     THREAD_DEFAULT_CREATION_FLAGS, THREAD_DEFAULT_THREAD_ID);
+
+    if (threads[i] == NULL) {
+      // TODO: handle thread creation failure properly
+      printf("Thread creation failed");
+    }
+  }
+
+  WaitForMultipleObjects(numOfProcessors, threads, THREAD_DEFAULT_WAIT_FOR_ALL,
+                         THREAD_DEFAULT_WAIT_MS);
+
+  for (int i = 0; i < numOfProcessors; i++) {
+    CloseHandle(threads[i]);
   }
 
   // TODO: draw this in the 3D menu instead
@@ -184,6 +211,11 @@ void Render3D_RenderMode(Render *render) {
   DrawMeshInstanced(render->render3d->cube, render->render3d->matInstances,
                     render->render3d->transforms, CUBE_COUNT);
 
+  if (isColliding) {
+    DrawMesh(render->render3d->cube, render->render3d->matSelection,
+             collMatrix);
+  }
+
   Render_LogGlError();
 
   DrawGrid(100, 1.0f);
@@ -196,3 +228,50 @@ void Render3D_RenderMode(Render *render) {
 // void Render3D_Teardown() {
 //   RL_FREE(transforms);
 // }
+
+// TODO: profile this and make necessary performance improvements, if needed
+static void
+__Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes) {
+  Cells3D *actualCd = threadCubes->actualCd;
+  Camera *camera = threadCubes->camera;
+  Mesh *cube = threadCubes->cube;
+  Matrix *transforms = threadCubes->transforms;
+
+  for (int tIdx = threadCubes->startIdx; tIdx < threadCubes->endIdx; tIdx++) {
+    bool is_alive = actualCd->is_alive[tIdx];
+    int x = actualCd->positionsX[tIdx];
+    int y = actualCd->positionsY[tIdx];
+    int z = actualCd->positionsZ[tIdx];
+
+    // since the arena is reset on every frame, we can just set the alive cells
+    actualCd->aliveCells++;
+    Matrix translation = MatrixTranslate(x, y, z);
+    // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
+
+    Matrix scale = MatrixScale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
+
+    // with no gaps between the cubes
+    Matrix mul = MatrixMultiply(translation, scale);
+    // with gaps
+    // Matrix mul = MatrixMultiply(scale, translation);
+
+    // TODO: raycast to the nearest cube
+    Ray cursorRay = GetScreenToWorldRay(GetMousePosition(), *camera);
+    RayCollision cursorCubeCollision =
+        GetRayCollisionMesh(cursorRay, *cube, mul);
+    // TODO: account for this function being run in multiple threads
+    /*
+    if (cursorCubeCollision.hit && !isColliding) {
+      isColliding = true;
+      if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        actualCd->is_alive[tIdx] = !actualCd->is_alive[tIdx];
+        collMatrix = mul;
+      }
+      printf("Collision with: x=%d, y=%d, z=%d\n", x, y, z);
+    }
+    */
+    if (is_alive) { //&& !isColliding) {
+      transforms[tIdx] = mul;
+    }
+  }
+}
