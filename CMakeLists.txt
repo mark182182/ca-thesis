@@ -66,11 +66,12 @@ add_compile_options(
     $<$<COMPILE_LANGUAGE:C>:-Wno-documentation-unknown-command>
 )
 
-if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    add_link_options(-fuse-ld=lld -g -Wl,--pdb=)
-else()
-    add_link_options(-fuse-ld=lld)
-endif()
+# TODO: is fuse needed?
+# if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+#     add_link_options(-fuse-ld=lld -g -Wl,--pdb=)
+# else()
+#     add_link_options(-fuse-ld=lld)
+# endif()
 
 project(${EXECUTABLE_NAME} LANGUAGES C)
 
