@@ -34,8 +34,6 @@
 *.out
 *.app
 
-resources
-
 ### CMake ###
 CMakeLists.txt.user
 CMakeCache.txt
