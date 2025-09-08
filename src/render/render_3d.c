@@ -1,6 +1,7 @@
 #include "render_3d.h"
 #include <stdio.h>
 #include <string.h>
+#include "const.h"
 
 #include "raylib_shim.h"
 
@@ -74,12 +75,71 @@ Render3D Render3D_Init(Render *render) {
   Cells_CalcNeighbourOffsets3D(&NEIGHBOUR_INDEXES_3D, MAX_CUBES_X, MAX_CUBES_Y,
                                MAX_CUBES_Z);
 
-  Render3D render3d = {.camera = camera,
-                       .cube = cube,
-                       .matInstances = matInstances,
-                       .matSelection = matSelection,
-                       .render3DSpeed = 0.4f,
-                       .transforms = transforms};
+  // TODO: replace mallocs for arena
+  HANDLE *transformMatrixThreads = malloc(numOfProcessors * sizeof(HANDLE));
+  Render3DThreadCubes *allThreadCubes =
+      malloc(numOfProcessors * sizeof(Render3DThreadCubes));
+
+  // Render3DThreadCubes *allThreadCubes = Arena_AllocAlignedZeroed(
+  //     &render->frame3DArena, numOfProcessors * sizeof(Render3DThreadCubes),
+  //     DEFAULT_ARENA_ALIGNMENT);
+
+  int chunkSizePerThread = CUBE_COUNT / numOfProcessors;
+
+  HANDLE startEvent = CreateEvent(
+      THREAD_DEFAULT_SEC_ATTRIBUTES,
+      TRUE,  // creates a manual-reset event object, which requires the use of
+             // the ResetEvent function to set the event state to nonsignaled
+      FALSE, // initial state is nonsignaled
+      NULL);
+
+  if (startEvent == NULL) {
+    printf("Start event creation failed: %d\n", GetLastError());
+  }
+
+  for (int i = 0; i < numOfProcessors; i++) {
+    HANDLE doneEvent =
+        CreateEvent(THREAD_DEFAULT_SEC_ATTRIBUTES, FALSE, FALSE, NULL);
+
+    // auto-reset is used here, every thread gets its separate done event, in
+    // order to properly wait for the completion of all of them
+    if (doneEvent == NULL) {
+      printf("Done event creation failed: %d\n", GetLastError());
+    }
+
+    allThreadCubes[i] =
+        (Render3DThreadCubes){.actualCd = NULL, // will be set at render
+                              .camera = &camera,
+                              .cube = &cube,
+                              .transforms = transforms,
+                              .startEvent = startEvent,
+                              .doneEvent = doneEvent,
+                              .startIdx = i * chunkSizePerThread,
+                              .endIdx = (i + 1) * chunkSizePerThread};
+    if (i == numOfProcessors - 1) {
+      allThreadCubes[i].endIdx = CUBE_COUNT;
+    }
+
+    transformMatrixThreads[i] =
+        CreateThread(THREAD_DEFAULT_SEC_ATTRIBUTES, THREAD_DEFAULT_STACK_SIZE,
+                     __Render3D_ResolveTransformMatrix, &allThreadCubes[i],
+                     THREAD_DEFAULT_CREATION_FLAGS, THREAD_DEFAULT_THREAD_ID);
+
+    if (transformMatrixThreads[i] == NULL) {
+      printf("Thread creation failed: %d\n", GetLastError());
+    }
+  }
+
+  Render3D render3d = {
+      .camera = camera,
+      .cube = cube,
+      .matInstances = matInstances,
+      .matSelection = matSelection,
+      .render3DSpeed = 0.4f,
+      .transforms = transforms,
+      .allThreadCubes = allThreadCubes,
+      .transformMatrixThreads = transformMatrixThreads,
+  };
   return render3d;
 }
 
@@ -160,42 +220,31 @@ void Render3D_RenderMode(Render *render) {
   bool isColliding = false;
   Matrix collMatrix = {0};
 
-  // TODO: fix the multi-threading issue
-  HANDLE threads[numOfProcessors];
-  Render3DThreadCubes *allThreadCubes = Arena_AllocAligned(
-      &render->frame3DArena, numOfProcessors * sizeof(Render3DThreadCubes),
-      DEFAULT_ARENA_ALIGNMENT);
-
-  int chunkSizePerThread = CUBE_COUNT / numOfProcessors;
-
   for (int i = 0; i < numOfProcessors; i++) {
-    allThreadCubes[i] =
-        (Render3DThreadCubes){.actualCd = actualCd,
-                              .camera = &render->render3d->camera,
-                              .cube = &render->render3d->cube,
-                              .transforms = render->render3d->transforms,
-                              .startIdx = i * chunkSizePerThread,
-                              .endIdx = (i + 1) * chunkSizePerThread};
-    if (i == numOfProcessors - 1) {
-      allThreadCubes[i].endIdx = CUBE_COUNT;
-    }
-
-    threads[i] =
-        CreateThread(THREAD_DEFAULT_SEC_ATTRIBUTES, THREAD_DEFAULT_STACK_SIZE,
-                     __Render3D_ResolveTransformMatrix, &allThreadCubes[i],
-                     THREAD_DEFAULT_CREATION_FLAGS, THREAD_DEFAULT_THREAD_ID);
-
-    if (threads[i] == NULL) {
-      // TODO: handle thread creation failure properly
-      printf("Thread creation failed");
-    }
+    render->render3d->allThreadCubes[i].actualCd = actualCd;
+    // sets the specified event object to the signaled state
+    SetEvent(render->render3d->allThreadCubes[i].startEvent);
   }
 
-  WaitForMultipleObjects(numOfProcessors, threads, THREAD_DEFAULT_WAIT_FOR_ALL,
-                         THREAD_DEFAULT_WAIT_MS);
-
+  HANDLE doneEvents[numOfProcessors];
   for (int i = 0; i < numOfProcessors; i++) {
-    CloseHandle(threads[i]);
+    doneEvents[i] = render->render3d->allThreadCubes[i].doneEvent;
+  }
+
+  DWORD waitResult = WaitForMultipleObjects(
+      numOfProcessors, doneEvents, THREAD_DEFAULT_WAIT_FOR_ALL, INFINITE);
+
+  switch (waitResult) {
+    // return value within the specified range indicates that the state of all
+    // specified objects is signaled
+  case WAIT_OBJECT_0:
+    // TODO: fails at this part after the 2nd render call
+    // printf("All threads ended successfully\n");
+    break;
+
+  default:
+    printf("WaitForMultipleObjects failed: %d\n", GetLastError());
+    break;
   }
 
   // TODO: draw this in the 3D menu instead
@@ -225,53 +274,85 @@ void Render3D_RenderMode(Render *render) {
   Arena_FreeZeroed(&render->frame3DArena);
 }
 
+// TODO: teardown properly
 // void Render3D_Teardown() {
-//   RL_FREE(transforms);
+// CloseEvents();
+
+// for (int i = 0; i < numOfProcessors; i++) {
+//   CloseHandle(render->render3d->transformMatrixThreads[i]);
+// }
 // }
 
 // TODO: profile this and make necessary performance improvements, if needed
 static void
 __Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes) {
-  Cells3D *actualCd = threadCubes->actualCd;
-  Camera *camera = threadCubes->camera;
-  Mesh *cube = threadCubes->cube;
-  Matrix *transforms = threadCubes->transforms;
 
-  for (int tIdx = threadCubes->startIdx; tIdx < threadCubes->endIdx; tIdx++) {
-    bool is_alive = actualCd->is_alive[tIdx];
-    int x = actualCd->positionsX[tIdx];
-    int y = actualCd->positionsY[tIdx];
-    int z = actualCd->positionsZ[tIdx];
+  for (;;) {
+    DWORD waitResult = WaitForSingleObject(threadCubes->startEvent, INFINITE);
 
-    // since the arena is reset on every frame, we can just set the alive cells
-    actualCd->aliveCells++;
-    Matrix translation = MatrixTranslate(x, y, z);
-    // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
+    ResetEvent(threadCubes->startEvent); // consumes the event
 
-    Matrix scale = MatrixScale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
-
-    // with no gaps between the cubes
-    Matrix mul = MatrixMultiply(translation, scale);
-    // with gaps
-    // Matrix mul = MatrixMultiply(scale, translation);
-
-    // TODO: raycast to the nearest cube
-    Ray cursorRay = GetScreenToWorldRay(GetMousePosition(), *camera);
-    RayCollision cursorCubeCollision =
-        GetRayCollisionMesh(cursorRay, *cube, mul);
-    // TODO: account for this function being run in multiple threads
-    /*
-    if (cursorCubeCollision.hit && !isColliding) {
-      isColliding = true;
-      if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-        actualCd->is_alive[tIdx] = !actualCd->is_alive[tIdx];
-        collMatrix = mul;
-      }
-      printf("Collision with: x=%d, y=%d, z=%d\n", x, y, z);
+    // validate, if everything have been setup properly
+    if (!threadCubes->actualCd) {
+      continue;
     }
-    */
-    if (is_alive) { //&& !isColliding) {
-      transforms[tIdx] = mul;
+
+    Cells3D *actualCd = threadCubes->actualCd;
+    Camera *camera = threadCubes->camera;
+    Mesh *cube = threadCubes->cube;
+    Matrix *transforms = threadCubes->transforms;
+
+    // printf("Thread %d processing start %d - end %d\n", GetCurrentThreadId(),
+    //        threadCubes->startIdx, threadCubes->endIdx);
+
+    // printf("threadCubes->startIdx: %d, threadCubes->endIdx: %d \n",
+    //        threadCubes->startIdx, threadCubes->endIdx);
+
+    for (int i = threadCubes->startIdx; i < threadCubes->endIdx; i++) {
+      bool is_alive = actualCd->is_alive[i];
+      int x = actualCd->positionsX[i];
+      int y = actualCd->positionsY[i];
+      int z = actualCd->positionsZ[i];
+
+      // since the arena is reset on every frame, we can just set the alive
+      // cells
+
+      Matrix translation = MatrixTranslate(x, y, z);
+      // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
+
+      Matrix scale = MatrixScale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
+
+      // with no gaps between the cubes
+      Matrix mul = MatrixMultiply(translation, scale);
+      // with gaps
+      // Matrix mul = MatrixMultiply(scale, translation);
+
+      // raycast to the nearest cube
+      // TODO: not thread-safe
+      // Ray cursorRay = GetScreenToWorldRay(GetMousePosition(), *camera);
+      // RayCollision cursorCubeCollision =
+      //     GetRayCollisionMesh(cursorRay, *cube, mul);
+
+      // TODO: account for this function being run in multiple threads
+      /*
+      if (cursorCubeCollision.hit && !isColliding) {
+        isColliding = true;
+        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+          actualCd->is_alive[i] = !actualCd->is_alive[i];
+          collMatrix = mul;
+        }
+        printf("Collision with: x=%d, y=%d, z=%d\n", x, y, z);
+      }
+      */
+      if (is_alive) { //&& !isColliding) {
+        // TODO: the issue can be here, since multiple threads will write to the
+        // same variable without locking
+        actualCd->aliveCells++;
+        transforms[i] = mul;
+      }
+
+      SetEvent(threadCubes->doneEvent); // threads will signal the end of the
+                                        // work, render thread will consume
     }
   }
 }

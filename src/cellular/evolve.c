@@ -124,8 +124,10 @@ static int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
 void EvolveGOL3D_NextGeneration(Arena *frame3DArena, Cells3D *outC3d,
                                 const Cells3D *inC3d) {
 
+  // TODO: create the threads once at init and feed them work during render. Use
+  // events for synchronization.
   HANDLE threads[numOfProcessors];
-  Evolve3DThreadCells *allThreadCells = Arena_AllocAligned(
+  Evolve3DThreadCells *allThreadCells = Arena_AllocAlignedZeroed(
       frame3DArena, numOfProcessors * sizeof(Evolve3DThreadCells),
       DEFAULT_ARENA_ALIGNMENT);
 
@@ -149,8 +151,7 @@ void EvolveGOL3D_NextGeneration(Arena *frame3DArena, Cells3D *outC3d,
                      THREAD_DEFAULT_CREATION_FLAGS, THREAD_DEFAULT_THREAD_ID);
 
     if (threads[i] == NULL) {
-      // TODO: handle thread creation failure properly
-      printf("Thread creation failed");
+      printf("Thread creation failed: %d", GetLastError());
     }
   }
 
@@ -164,6 +165,9 @@ void EvolveGOL3D_NextGeneration(Arena *frame3DArena, Cells3D *outC3d,
 
 static void
 __GOL3D_NextGenerationMultiThread(Evolve3DThreadCells *threadCells) {
+  // printf("Thread %d processing start %d - end %d\n", GetCurrentThreadId(),
+  //        threadCells->startIdx, threadCells->endIdx);
+
   for (int i = threadCells->startIdx; i < threadCells->endIdx; i++) {
     int neighbours = __GOL3DCheckNeighbours(threadCells->inC3d, i);
     bool isCurrentAlive = threadCells->inC3d->is_alive[i];
