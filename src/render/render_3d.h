@@ -3,6 +3,8 @@
 
 #include "render.h"
 
+typedef struct Evolve3DThreadCells Evolve3DThreadCells;
+
 typedef struct Render3DThreadCubes {
   Cells3D *actualCd;
   Camera *camera;
@@ -22,6 +24,9 @@ typedef struct Render3D {
   Material matInstances;
   Material matSelection;
   Matrix *transforms;
+
+  Evolve3DThreadCells *allThreadCells;
+  HANDLE *nextGenThreads;
 
   Render3DThreadCubes *allThreadCubes;
   HANDLE *transformMatrixThreads;

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.11) # FetchContent is available in 3.11+
 
 # Set the C standard to C17, as it's one of the most recent stable standards, widely supported.
+# NOTE: The project is using C, but some dependencies (like tracy) require C++.
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -14,11 +15,11 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Debug build should not optimize and should include debug symbols
+# Debug build should NOT optimize and should include debug symbols
 # Would add -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls as well, but tricky using on Windows with msys2/MINGW, so gdb has to be used instead
-set(CMAKE_C_FLAGS_DEBUG "-O0 -g -gcodeview -gdwarf-4 -Wno-declaration-after-statement")
+set(CMAKE_C_FLAGS_DEBUG "-O0 -DDEBUG -g -gcodeview -gdwarf-4 -Wno-declaration-after-statement")
 
-# Release build should optimize and not include debug symbols, disable asserts
+# Release build should optimize and NOT include debug symbols, disable asserts
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 
@@ -27,11 +28,11 @@ if (COMPAT_MODE)
     # For Intel HD Graphics 4000 (minimum support level), drop it down to OpenGL 3.3, if the compatibility flag is set
     # For other GPUs, use OpenGL 4.3
     set(EXECUTABLE_NAME "ca_renderer_compat")
-    set(CMAKE_C_ADDITIONAL_FLAGS "-march=core-avx-i")
+    set(CMAKE_C_ADDITIONAL_FLAGS "${COMMON_FLAGS_COMPAT}")
     set(GRAPHICS_LEVEL ${GRAPHICS_COMPAT_LEVEL} CACHE STRING "Graphics API Level" FORCE)
 else()
     set(EXECUTABLE_NAME "ca_renderer")
-    set(CMAKE_C_ADDITIONAL_FLAGS "-mavx2")
+    set(CMAKE_C_ADDITIONAL_FLAGS "${COMMON_FLAGS}")
     set(GRAPHICS_LEVEL ${GRAPHICS_LEVEL} CACHE STRING "Graphics API Level" FORCE)
 endif()
 
@@ -66,13 +67,6 @@ add_compile_options(
     $<$<COMPILE_LANGUAGE:C>:-Wno-documentation-unknown-command>
 )
 
-# TODO: is fuse needed?
-# if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-#     add_link_options(-fuse-ld=lld -g -Wl,--pdb=)
-# else()
-#     add_link_options(-fuse-ld=lld)
-# endif()
-
 project(${EXECUTABLE_NAME} LANGUAGES C)
 
 if (INCLUDE_TESTS)
@@ -86,14 +80,14 @@ if (INCLUDE_TESTS)
 endif()
 
 # Add source to this project's executable.
-
 file(GLOB_RECURSE CA_RENDERER_SRC CONFIGURE_DEPENDS "src/*.c")
 add_executable(${EXECUTABLE_NAME} "${CMAKE_SOURCE_DIR}/resources" ${CA_RENDERER_SRC})
-target_include_directories(${EXECUTABLE_NAME} PRIVATE src "external/raylib-${RAYLIB_VERSION}/src")
 
+# Set cache dirs
+set(RAYLIB_CACHE_DIR "${CMAKE_SOURCE_DIR}/external/raylib-${RAYLIB_VERSION}")
+set(TRACY_CACHE_DIR "${CMAKE_SOURCE_DIR}/external/tracy-${TRACY_VERSION}")
 
 # Raylib
-set(RAYLIB_CACHE_DIR "${CMAKE_SOURCE_DIR}/external/raylib-${RAYLIB_VERSION}")
 
 # First check if raylib is already built in our cache directory
 if(EXISTS "${RAYLIB_CACHE_DIR}/build")
@@ -134,24 +128,66 @@ if (NOT raylib_FOUND)
     endif()
 endif()
 
+
+# Platform-specific libraries to link against
+set(PLATFORM_LIBS "")
+
+if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+    enable_language(CXX)
+    # Set C++ flags to match C flags
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+
+    include(FetchContent)
+    FetchContent_Declare(
+        tracy
+        DOWNLOAD_EXTRACT_TIMESTAMP OFF
+        GIT_REPOSITORY
+        https://github.com/wolfpld/tracy.git
+        GIT_TAG
+        v${TRACY_VERSION}
+        GIT_SHALLOW
+        TRUE
+        GIT_PROGRESS
+        TRUE
+        SOURCE_DIR "${TRACY_CACHE_DIR}"
+    )
+
+    FetchContent_MakeAvailable(tracy)
+
+    set_target_properties(TracyClient PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+    )
+
+    # link against static C++ standard library
+    target_link_options(TracyClient PRIVATE -static-libgcc -static-libstdc++ -static-libwinpthread)
+
+    target_compile_definitions(${EXECUTABLE_NAME} PRIVATE TRACY_ENABLE)
+    target_link_libraries(${EXECUTABLE_NAME} PRIVATE TracyClient)
+
+    set(DEBUG_MODE TRUE)
+endif()
+
 if(MSVC OR MINGW OR MINGW32 OR MINGW64)
     # For MSVC or MinGW, link against Windows libraries
-    target_link_libraries(${PROJECT_NAME}
-        raylib
-        kernel32
-        user32
-        gdi32
-        winmm
-        shell32
-    )
+    list(APPEND PLATFORM_LIBS raylib kernel32 user32 gdi32 winmm shell32 )
 else()
     # Other compilers, possibly Unix-like
-    target_link_libraries(${PROJECT_NAME}
-        raylib
-        m
-        c
-    )
+    list(APPEND PLATFORM_LIBS raylib m c)
 endif()
+
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE
+    ${PLATFORM_LIBS}
+)
+
+# Include additional directories
+target_include_directories(
+    ${EXECUTABLE_NAME}
+    PRIVATE
+    src "external/raylib-${RAYLIB_VERSION}/src"
+    $<$<CONFIG:DEBUG>:${TRACY_CACHE_DIR}/public>  # Add Tracy headers in Debug mode
+)
 
 # Copy resources directory to the output directory
 add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD

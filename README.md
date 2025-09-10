@@ -28,7 +28,7 @@ This project is part of a thesis work for rendering 2D/3D cellular automata in C
 
 # Tools
 
-- Profiler: TBD
-  - Would have used tracy, but it's for C++: https://github.com/wolfpld/tracy/tree/master
+- Profiler: Tracy https://github.com/wolfpld/tracy/tree/master
+  - Profiling non Visual Studio projects (.exe or attached process) cannot be used, since the project is not using MSVC compiler, so Tracy is used instead. Also it's not bound to a specific IDE.
 - Debugger: https://github.com/EpicGamesExt/raddebugger and [debug.sh](debug.sh) script to gdb with the current build for e.g. segment faults or other issues.
 - clang-tidy: Linter for displaying warnings and errors in the code, which can be run, https://clang.llvm.org/extra/clang-tidy/

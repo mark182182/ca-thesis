@@ -10,15 +10,19 @@
 #include "cellular/evolve.h"
 #include "light.h"
 
+#ifdef DEBUG_MODE
+#include "tracy/TracyC.h"
+#endif
+
 static int currentGeneration = 0;
 
 Render3D Render3D_Init(Render *render) {
   Arena mode3DArena =
       Arena_Init("modeArena", &mode3DArenaStorage, MODE_3D_STORAGE_SIZE);
+  render->mode3DArena = mode3DArena;
 
   Arena frame3DArena =
       Arena_Init("frame3DArena", &frame3DArenaStorage, FRAME_3D_STORAGE_SIZE);
-  render->mode3DArena = mode3DArena;
   render->frame3DArena = frame3DArena;
 
   Camera3D camera = {0};
@@ -75,35 +79,36 @@ Render3D Render3D_Init(Render *render) {
   Cells_CalcNeighbourOffsets3D(&NEIGHBOUR_INDEXES_3D, MAX_CUBES_X, MAX_CUBES_Y,
                                MAX_CUBES_Z);
 
-  // TODO: replace mallocs for arena
-  HANDLE *transformMatrixThreads = malloc(numOfProcessors * sizeof(HANDLE));
-  Render3DThreadCubes *allThreadCubes =
-      malloc(numOfProcessors * sizeof(Render3DThreadCubes));
+  Evolve3DThreadCells *allThreadCells =
+      EvolveGOL3D_CreateThreadCells(&render->mode3DArena);
+  HANDLE *nextGenThreads = EvolveGOL3D_CreateNextGenThreads(allThreadCells);
 
-  // Render3DThreadCubes *allThreadCubes = Arena_AllocAlignedZeroed(
-  //     &render->frame3DArena, numOfProcessors * sizeof(Render3DThreadCubes),
-  //     DEFAULT_ARENA_ALIGNMENT);
+  HANDLE *transformMatrixThreads = Arena_AllocAlignedZeroed(
+      &render->mode3DArena, numOfProcessors * sizeof(HANDLE),
+      DEFAULT_ARENA_ALIGNMENT);
 
-  int chunkSizePerThread = CUBE_COUNT / numOfProcessors;
+  Render3DThreadCubes *allThreadCubes = Arena_AllocAlignedZeroed(
+      &render->mode3DArena, numOfProcessors * sizeof(Render3DThreadCubes),
+      DEFAULT_ARENA_ALIGNMENT);
 
-  HANDLE startEvent = CreateEvent(
+  HANDLE threadCubesStartEvent = CreateEvent(
       THREAD_DEFAULT_SEC_ATTRIBUTES,
       TRUE,  // creates a manual-reset event object, which requires the use of
              // the ResetEvent function to set the event state to nonsignaled
       FALSE, // initial state is nonsignaled
       NULL);
 
-  if (startEvent == NULL) {
+  if (threadCubesStartEvent == NULL) {
     printf("Start event creation failed: %d\n", GetLastError());
   }
 
   for (int i = 0; i < numOfProcessors; i++) {
-    HANDLE doneEvent =
+    HANDLE threadCubesDoneEvent =
         CreateEvent(THREAD_DEFAULT_SEC_ATTRIBUTES, FALSE, FALSE, NULL);
 
     // auto-reset is used here, every thread gets its separate done event, in
     // order to properly wait for the completion of all of them
-    if (doneEvent == NULL) {
+    if (threadCubesDoneEvent == NULL) {
       printf("Done event creation failed: %d\n", GetLastError());
     }
 
@@ -112,8 +117,8 @@ Render3D Render3D_Init(Render *render) {
                               .camera = &camera,
                               .cube = &cube,
                               .transforms = transforms,
-                              .startEvent = startEvent,
-                              .doneEvent = doneEvent,
+                              .startEvent = threadCubesStartEvent,
+                              .doneEvent = threadCubesDoneEvent,
                               .startIdx = i * chunkSizePerThread,
                               .endIdx = (i + 1) * chunkSizePerThread};
     if (i == numOfProcessors - 1) {
@@ -130,16 +135,16 @@ Render3D Render3D_Init(Render *render) {
     }
   }
 
-  Render3D render3d = {
-      .camera = camera,
-      .cube = cube,
-      .matInstances = matInstances,
-      .matSelection = matSelection,
-      .render3DSpeed = 0.4f,
-      .transforms = transforms,
-      .allThreadCubes = allThreadCubes,
-      .transformMatrixThreads = transformMatrixThreads,
-  };
+  Render3D render3d = {.camera = camera,
+                       .cube = cube,
+                       .matInstances = matInstances,
+                       .matSelection = matSelection,
+                       .render3DSpeed = 0.4f,
+                       .transforms = transforms,
+                       .allThreadCells = allThreadCells,
+                       .nextGenThreads = nextGenThreads,
+                       .allThreadCubes = allThreadCubes,
+                       .transformMatrixThreads = transformMatrixThreads};
   return render3d;
 }
 
@@ -153,7 +158,16 @@ Render3D Render3D_Init(Render *render) {
 //                .color = RED,
 //                .attenuation = 1.0F};
 void Render3D_RenderMode(Render *render) {
+#ifdef DEBUG_MODE
+  TracyCFrameMarkNamed("Render3D_RenderModeFrameMark");
+  TracyCZoneN(all3dRenderMode, "All3dRenderMode", true);
+#endif
+
   if (render->isModeFirstFrame) {
+#ifdef DEBUG_MODE
+    TracyCZoneN(mode3dInitCtx, "Mode3dInitCtx", true);
+#endif
+
     printf("Rendering 3D mode\n");
     Cells3D_InitArraysBasedOnCellSize(&render->mode3DArena,
                                       &render->render3d->firstC3d);
@@ -162,19 +176,29 @@ void Render3D_RenderMode(Render *render) {
 
     Evolve3D_InitializeCells(&render->render3d->firstC3d, true);
     Evolve3D_InitializeCells(&render->render3d->secondC3d, false);
+
+#ifdef DEBUG_MODE
+    TracyCZoneEnd(mode3dInitCtx);
+#endif
   }
 
   if (render->deltaTime >= render->render3d->render3DSpeed) {
 
+#ifdef DEBUG_MODE
+    TracyCZoneN(ctx, "EvolveGOL3D_NextGeneration", true);
+#endif
     if (currentGeneration != 0 && currentGeneration % 2 == 0) {
-      EvolveGOL3D_NextGeneration(&render->frame3DArena,
+      EvolveGOL3D_NextGeneration(render->render3d->allThreadCells,
                                  &render->render3d->firstC3d,
                                  &render->render3d->secondC3d);
     } else {
-      EvolveGOL3D_NextGeneration(&render->frame3DArena,
+      EvolveGOL3D_NextGeneration(render->render3d->allThreadCells,
                                  &render->render3d->secondC3d,
                                  &render->render3d->firstC3d);
     }
+#ifdef DEBUG_MODE
+    TracyCZoneEnd(ctx);
+#endif
     currentGeneration++;
     render->deltaTime = 0;
 
@@ -193,6 +217,9 @@ void Render3D_RenderMode(Render *render) {
   }
   render->deltaTime += GetFrameTime();
 
+#ifdef DEBUG_MODE
+  TracyCZoneN(beforeWaitCtx, "Render3DBeforeWait", true);
+#endif
   Cells3D *actualCd = currentGeneration % 2 == 0 ? &render->render3d->secondC3d
                                                  : &render->render3d->firstC3d;
 
@@ -216,10 +243,6 @@ void Render3D_RenderMode(Render *render) {
   // cell
   actualCd->aliveCells = 0;
 
-  // TODO: revise this, so it's not that highly coupled, if possible
-  bool isColliding = false;
-  Matrix collMatrix = {0};
-
   for (int i = 0; i < numOfProcessors; i++) {
     render->render3d->allThreadCubes[i].actualCd = actualCd;
     // sets the specified event object to the signaled state
@@ -231,26 +254,80 @@ void Render3D_RenderMode(Render *render) {
     doneEvents[i] = render->render3d->allThreadCubes[i].doneEvent;
   }
 
-  DWORD waitResult = WaitForMultipleObjects(
-      numOfProcessors, doneEvents, THREAD_DEFAULT_WAIT_FOR_ALL, INFINITE);
+#ifdef DEBUG_MODE
+  TracyCZoneEnd(beforeWaitCtx);
+
+  TracyCZoneN(beforeDuringCtx, "Render3DDuringWait", true);
+#endif
+  DWORD waitResult = WaitForMultipleObjects(numOfProcessors, doneEvents,
+                                            THREAD_DEFAULT_WAIT_FOR_ALL,
+                                            THREAD_DEFAULT_WAIT_MS);
+#ifdef DEBUG_MODE
+  TracyCZoneEnd(beforeDuringCtx);
+#endif
 
   switch (waitResult) {
     // return value within the specified range indicates that the state of all
-    // specified objects is signaled
+    // specified objects is (set to) signaled
   case WAIT_OBJECT_0:
-    // TODO: fails at this part after the 2nd render call
     // printf("All threads ended successfully\n");
     break;
 
   default:
-    printf("WaitForMultipleObjects failed: %d\n", GetLastError());
+    printf("Render3D_RenderMode WaitForMultipleObjects failed: %d\n",
+           GetLastError());
     break;
   }
+
+  // TODO: revise this, so it's not that highly coupled, if possible
+  bool isColliding = false;
+  Matrix collMatrix = {0};
+
+#ifdef DEBUG_MODE
+  TracyCZoneN(cursorRayCtx, "CursorRay", true);
+#endif
+  Ray cursorRay =
+      GetScreenToWorldRay(GetMousePosition(), render->render3d->camera);
+#ifdef DEBUG_MODE
+  TracyCZoneEnd(cursorRayCtx);
+
+  TracyCZoneN(rayCollisionCtx, "RayCollision", true);
+#endif
+  // NOTE: since this is not thread-safe and have to call this in the main
+  // thread due to the OpenGL context. Another way to do this would be to create
+  // a custom method that can replace the raylib collision test that can be
+  // parallelized.
+  for (int i = 0; i < numOfProcessors && !isColliding; i++) {
+    Render3DThreadCubes threadCubes = render->render3d->allThreadCubes[i];
+    for (int j = threadCubes.startIdx; j < threadCubes.endIdx && !isColliding;
+         j++) {
+      Matrix transformedMatrix = threadCubes.transforms[j];
+      // raycast to the nearest cube
+      RayCollision cursorCubeCollision = GetRayCollisionMesh(
+          cursorRay, render->render3d->cube, transformedMatrix);
+
+      if (cursorCubeCollision.hit && !isColliding) {
+        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+          actualCd->is_alive[i] = !actualCd->is_alive[i];
+          collMatrix = transformedMatrix;
+          isColliding = true;
+        }
+        int x = actualCd->positionsX[i];
+        int y = actualCd->positionsY[i];
+        int z = actualCd->positionsZ[i];
+        // printf("Collision with: x=%d, y=%d, z=%d\n", x, y, z);
+      }
+    }
+  }
+#ifdef DEBUG_MODE
+  TracyCZoneEnd(rayCollisionCtx);
 
   // TODO: draw this in the 3D menu instead
   // printf("aliveCells: %d\n", actualCd->aliveCells);
   // printf("\nDrawn %d cubes\n", tIdx + 1);
 
+  TracyCZoneN(draw3dCtx, "Draw3d", true);
+#endif
   Render_BeginDrawing();
 
   BeginMode3D(render->render3d->camera);
@@ -271,7 +348,19 @@ void Render3D_RenderMode(Render *render) {
 
   EndMode3D();
 
-  Arena_FreeZeroed(&render->frame3DArena);
+#ifdef DEBUG_MODE
+  TracyCZoneEnd(draw3dCtx);
+
+  TracyCZoneN(render3dFrameArenaFree, "Render3DFrameArena_FreeZeroed", true);
+#endif
+
+  Arena_Free(&render->frame3DArena);
+
+#ifdef DEBUG_MODE
+  TracyCZoneEnd(render3dFrameArenaFree);
+
+  TracyCZoneEnd(all3dRenderMode);
+#endif
 }
 
 // TODO: teardown properly
@@ -286,9 +375,11 @@ void Render3D_RenderMode(Render *render) {
 // TODO: profile this and make necessary performance improvements, if needed
 static void
 __Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes) {
-
   for (;;) {
-    DWORD waitResult = WaitForSingleObject(threadCubes->startEvent, INFINITE);
+    // TracyCZoneN(waitForObjCtx, "ResolveTransformWaitForObj", true);
+    DWORD waitResult =
+        WaitForSingleObject(threadCubes->startEvent, THREAD_DEFAULT_WAIT_MS);
+    // TracyCZoneEnd(waitForObjCtx);
 
     ResetEvent(threadCubes->startEvent); // consumes the event
 
@@ -296,6 +387,10 @@ __Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes) {
     if (!threadCubes->actualCd) {
       continue;
     }
+
+#ifdef DEBUG_MODE
+    TracyCZoneN(ctx, "ResolveTransformMatrixZone", true);
+#endif
 
     Cells3D *actualCd = threadCubes->actualCd;
     Camera *camera = threadCubes->camera;
@@ -310,6 +405,13 @@ __Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes) {
 
     for (int i = threadCubes->startIdx; i < threadCubes->endIdx; i++) {
       bool is_alive = actualCd->is_alive[i];
+      if (!is_alive) {
+        // expected to provide the full array of matrixes, so we have to scale
+        // down the cube to 0, which effectively occupies no space
+        transforms[i] = MatrixScale(0, 0, 0);
+        continue;
+      }
+
       int x = actualCd->positionsX[i];
       int y = actualCd->positionsY[i];
       int z = actualCd->positionsZ[i];
@@ -327,32 +429,13 @@ __Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes) {
       // with gaps
       // Matrix mul = MatrixMultiply(scale, translation);
 
-      // raycast to the nearest cube
-      // TODO: not thread-safe
-      // Ray cursorRay = GetScreenToWorldRay(GetMousePosition(), *camera);
-      // RayCollision cursorCubeCollision =
-      //     GetRayCollisionMesh(cursorRay, *cube, mul);
-
-      // TODO: account for this function being run in multiple threads
-      /*
-      if (cursorCubeCollision.hit && !isColliding) {
-        isColliding = true;
-        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-          actualCd->is_alive[i] = !actualCd->is_alive[i];
-          collMatrix = mul;
-        }
-        printf("Collision with: x=%d, y=%d, z=%d\n", x, y, z);
-      }
-      */
-      if (is_alive) { //&& !isColliding) {
-        // TODO: the issue can be here, since multiple threads will write to the
-        // same variable without locking
-        actualCd->aliveCells++;
-        transforms[i] = mul;
-      }
-
-      SetEvent(threadCubes->doneEvent); // threads will signal the end of the
-                                        // work, render thread will consume
+      actualCd->aliveCells++;
+      transforms[i] = mul;
     }
+    // threads will signal the end of the work, render thread will consume
+    SetEvent(threadCubes->doneEvent);
+#ifdef DEBUG_MODE
+    TracyCZoneEnd(ctx);
+#endif
   }
 }

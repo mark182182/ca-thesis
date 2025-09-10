@@ -81,7 +81,7 @@ void Menu2D_Draw(Render *render) {
     aliveCellsItem.textToDraw = aliveCellsText;
 
     char pauseText[32];
-    snprintf(pauseText, sizeof(currGenText), "Pause state: %s",
+    snprintf(pauseText, sizeof(pauseText), "Pause state: %s",
              boolToString(render->isPaused));
 
     MenuDrawItem controlItem = MenuDrawItem_ShallowCopy(&commonDrawItem);

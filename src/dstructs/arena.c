@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "raylib_shim.h"
+
+#ifdef DEBUG_MODE
+#include "tracy/TracyC.h"
+#endif
+
 static void __ExitWithMsg(char *msg) {
   fprintf(stderr, "Error: %s\n", msg);
   exit(1);
@@ -67,6 +73,10 @@ void *__Arena_Alloc(Arena *arena, size_t size, size_t alignment,
   }
 
   arena->used = newUsedSize;
+
+#ifdef DEBUG_MODE
+  TracyCAlloc(alignedAddr, newUsedSize);
+#endif
   return (void *)alignedAddr;
 }
 
@@ -84,6 +94,7 @@ void Arena_FreeZeroed(Arena *arena) {
   if (arena != NULL) {
     arena->used = 0;
     if (arena->memory != NULL) {
+      // NOTE: this can be costly, as it sets every byte one-by-one
       memset(arena->memory, 0, arena->capacity);
     }
   }

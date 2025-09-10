@@ -44,11 +44,6 @@ mkdir -p build
 
 # Need to patch raylib's CMakeLists.txt, otherwise it would try to use the CXX compiler as well, but it does not actually need it.
 
-raylib_version="5.5"
-# graphics_level="GRAPHICS_API_OPENGL_43"
-graphics_compat_level="GRAPHICS_API_OPENGL_33"
-graphics_level="GRAPHICS_API_OPENGL_43"
-
 raylib_cmake_path="external/raylib-${raylib_version}/CMakeLists.txt"
 if [ -f "$raylib_cmake_path" ]; then
     echo "Patching raylib CMakeLists.txt..."
@@ -78,18 +73,28 @@ if [[ "$*" == *"--tests"* ]]; then
     echo "Including tests in the build."
     include_tests="ON"
 fi
+cp "C:/msys64/mingw64/bin/libgcc_s_seh-1.dll" build/
+cp "C:/msys64/mingw64/bin/libwinpthread-1.dll" build/
+cp "C:/msys64/mingw64/bin/libstdc++-6.dll" build/
 
-export CC=clang
+
+
+export CC="C:/msys64/mingw64/bin/clang.exe"
+export CXX="C:/msys64/mingw64/bin/clang++.exe"
+
 cmake -S . -B build \
     -G "MinGW Makefiles" \
     -DCMAKE_BUILD_TYPE="$build_type" \
-    -DCMAKE_C_COMPILER="C:/msys64/mingw64/bin/clang.exe" \
+    -DCMAKE_C_COMPILER="$CC" \
+    -DCMAKE_CXX_COMPILER="$CXX" \
     -DCMAKE_MAKE_PROGRAM="make" \
     -DCLANG_VERBOSE="$verbose_mode" \
     -DCLANG_DUMP_AST="$dump_mode" \
     -DCOMPAT_MODE="$compat_mode" \
     -DCOMMON_FLAGS="$COMMON_FLAGS" \
+    -DCOMMON_FLAGS_COMPAT="$COMMON_FLAGS_COMPAT" \
     -DRAYLIB_VERSION="$raylib_version" \
+    -DTRACY_VERSION="$tracy_version" \
     -DGRAPHICS_COMPAT_LEVEL="$graphics_compat_level" \
     -DGRAPHICS_LEVEL="$graphics_level" \
     -DINCLUDE_TESTS="$include_tests"

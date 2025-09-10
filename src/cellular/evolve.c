@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include "raylib_shim.h"
 
+#ifdef DEBUG_MODE
+#include "tracy/TracyC.h"
+#endif
+
 int rule1DBits = 0x00000000;
 
 void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive,
@@ -118,25 +122,38 @@ static int __GOL2DCheckNeighbours(Cells2D *inC2d, int i) {
   return neighbours;
 }
 
-// TODO: It should receive the exact ruleset as well (e.g. R(4555) or
-// R(5766)) NOTE: Since C11 it would be possible to use threads.h, but it
-// would add more overhead etc., so the Windows API version is used instead
-void EvolveGOL3D_NextGeneration(Arena *frame3DArena, Cells3D *outC3d,
-                                const Cells3D *inC3d) {
-
-  // TODO: create the threads once at init and feed them work during render. Use
-  // events for synchronization.
-  HANDLE threads[numOfProcessors];
+Evolve3DThreadCells *EvolveGOL3D_CreateThreadCells(Arena *mode3dArena) {
   Evolve3DThreadCells *allThreadCells = Arena_AllocAlignedZeroed(
-      frame3DArena, numOfProcessors * sizeof(Evolve3DThreadCells),
+      mode3dArena, numOfProcessors * sizeof(Evolve3DThreadCells),
       DEFAULT_ARENA_ALIGNMENT);
+  return allThreadCells;
+}
 
-  int chunkSizePerThread = CUBE_COUNT / numOfProcessors;
+HANDLE *EvolveGOL3D_CreateNextGenThreads(Evolve3DThreadCells *allThreadCells) {
+  // TODO: create the threads once at init and feed them work during render. Use
+  // events for synchronization (if needed).
+  HANDLE nextGenThreads[numOfProcessors];
+
+  HANDLE startEvent = CreateEvent(
+      THREAD_DEFAULT_SEC_ATTRIBUTES,
+      TRUE,  // creates a manual-reset event object, which requires the use of
+             // the ResetEvent function to set the event state to nonsignaled
+      FALSE, // initial state is nonsignaled
+      NULL);
 
   for (int i = 0; i < numOfProcessors; i++) {
+    HANDLE doneEvent =
+        CreateEvent(THREAD_DEFAULT_SEC_ATTRIBUTES, FALSE, FALSE, NULL);
+
+    if (doneEvent == NULL) {
+      printf("Done event creation failed: %d\n", GetLastError());
+    }
+
     allThreadCells[i] = (Evolve3DThreadCells){
-        .inC3d = inC3d,
-        .outC3d = outC3d,
+        .inC3d = NULL,  // should be set at runtime
+        .outC3d = NULL, // should be set at runtime
+        .startEvent = startEvent,
+        .doneEvent = doneEvent,
         .startIdx = i * chunkSizePerThread,
         // get the next chunk based on the thread size and for the final thread,
         // process all remaining cells
@@ -145,44 +162,94 @@ void EvolveGOL3D_NextGeneration(Arena *frame3DArena, Cells3D *outC3d,
       allThreadCells[i].endIdx = CUBE_COUNT;
     }
 
-    threads[i] =
+    nextGenThreads[i] =
         CreateThread(THREAD_DEFAULT_SEC_ATTRIBUTES, THREAD_DEFAULT_STACK_SIZE,
                      __GOL3D_NextGenerationMultiThread, &allThreadCells[i],
                      THREAD_DEFAULT_CREATION_FLAGS, THREAD_DEFAULT_THREAD_ID);
 
-    if (threads[i] == NULL) {
+    if (nextGenThreads[i] == NULL) {
       printf("Thread creation failed: %d", GetLastError());
     }
   }
+}
 
-  WaitForMultipleObjects(numOfProcessors, threads, THREAD_DEFAULT_WAIT_FOR_ALL,
-                         THREAD_DEFAULT_WAIT_MS);
-
+// TODO: It should receive the exact ruleset as well (e.g. R(4555) or
+// R(5766)) NOTE: Since C11 it would be possible to use threads.h, but it
+// would add more overhead etc., so the Windows API version is used instead
+void EvolveGOL3D_NextGeneration(Evolve3DThreadCells *allThreadCells,
+                                Cells3D *outC3d, Cells3D *inC3d) {
   for (int i = 0; i < numOfProcessors; i++) {
-    CloseHandle(threads[i]);
+    allThreadCells[i].inC3d = inC3d;
+    allThreadCells[i].outC3d = outC3d;
+
+    SetEvent(allThreadCells[i].startEvent);
   }
+
+  HANDLE doneEvents[numOfProcessors];
+  for (int i = 0; i < numOfProcessors; i++) {
+    doneEvents[i] = allThreadCells[i].doneEvent;
+  }
+
+  DWORD waitResult = WaitForMultipleObjects(numOfProcessors, doneEvents,
+                                            THREAD_DEFAULT_WAIT_FOR_ALL,
+                                            THREAD_DEFAULT_WAIT_MS);
+
+  switch (waitResult) {
+  case WAIT_OBJECT_0:
+    // printf("All threads ended successfully\n");
+    break;
+
+  default:
+    printf("EvolveGOL3D_NextGeneration WaitForMultipleObjects failed: %d\n",
+           GetLastError());
+    break;
+  }
+
+  // TODO: this should be done at teardown
+  // for (int i = 0; i < numOfProcessors; i++) {
+  //   CloseHandle(nextGenThreads[i]);
+  // }
 }
 
 static void
 __GOL3D_NextGenerationMultiThread(Evolve3DThreadCells *threadCells) {
-  // printf("Thread %d processing start %d - end %d\n", GetCurrentThreadId(),
-  //        threadCells->startIdx, threadCells->endIdx);
+  for (;;) {
+    // TracyCZoneN(waitForObjCtx, "ResolveTransformWaitForObj", true);
+    DWORD waitResult =
+        WaitForSingleObject(threadCells->startEvent, THREAD_DEFAULT_WAIT_MS);
+    // TracyCZoneEnd(waitForObjCtx);
 
-  for (int i = threadCells->startIdx; i < threadCells->endIdx; i++) {
-    int neighbours = __GOL3DCheckNeighbours(threadCells->inC3d, i);
-    bool isCurrentAlive = threadCells->inC3d->is_alive[i];
+    ResetEvent(threadCells->startEvent); // consumes the event
 
-    if (isCurrentAlive) {
-      // under or overpopulation when < underpop && > overpop
-      // lives on when == underpop && == overpop
-      threadCells->outC3d->is_alive[i] =
-          neighbours >= UNDERPOPULATION_UPPER_CAP_3D &&
-          neighbours <= OVERPOPULATION_UPPER_CAP_3D;
-    } else {
-      // reproduction
-      threadCells->outC3d->is_alive[i] =
-          neighbours == OVERPOPULATION_UPPER_CAP_3D;
+    // validate, if everything have been setup properly
+    if (!threadCells->inC3d || !threadCells->outC3d) {
+      continue;
     }
+
+#ifdef DEBUG_MODE
+    TracyCZoneN(ctx, "__GOL3D_NextGenerationMultiThread", true);
+#endif
+
+    for (int i = threadCells->startIdx; i < threadCells->endIdx; i++) {
+      int neighbours = __GOL3DCheckNeighbours(threadCells->inC3d, i);
+      bool isCurrentAlive = threadCells->inC3d->is_alive[i];
+
+      if (isCurrentAlive) {
+        // under or overpopulation when < underpop && > overpop
+        // lives on when == underpop && == overpop
+        threadCells->outC3d->is_alive[i] =
+            neighbours >= UNDERPOPULATION_UPPER_CAP_3D &&
+            neighbours <= OVERPOPULATION_UPPER_CAP_3D;
+      } else {
+        // reproduction
+        threadCells->outC3d->is_alive[i] =
+            neighbours == OVERPOPULATION_UPPER_CAP_3D;
+      }
+    }
+    SetEvent(threadCells->doneEvent);
+#ifdef DEBUG_MODE
+    TracyCZoneEnd(ctx);
+#endif
   }
 }
 

@@ -33,8 +33,10 @@ typedef enum Evolve3DParams {
  */
 typedef struct Evolve3DThreadCells {
   Cells3D *outC3d;
-  const Cells3D *inC3d;
+  Cells3D *inC3d;
 
+  HANDLE startEvent;
+  HANDLE doneEvent;
   int startIdx;
   int endIdx;
 } Evolve3DThreadCells;
@@ -66,6 +68,16 @@ void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d);
 static int __GOL2DCheckNeighbours(Cells2D *inC2d, int i);
 
 /**
+ * Create the thread cells before creating the threads for the next generation;
+ */
+Evolve3DThreadCells *EvolveGOL3D_CreateThreadCells(Arena *mode3DArena);
+
+/**
+ * Create threads before running the next generation.
+ */
+HANDLE *EvolveGOL3D_CreateNextGenThreads(Evolve3DThreadCells *allThreadCells);
+
+/**
  * Evolve the given partitioned space to the next generation for 3D rendering.
  *
  * The default rules for 2D can be applied, but in 3D there are many more
@@ -91,8 +103,8 @@ static int __GOL2DCheckNeighbours(Cells2D *inC2d, int i);
  * if it has fewer than 4 or more than 5. A
  * dead cell becomes alive if it has 5 neighbours.
  */
-void EvolveGOL3D_NextGeneration(Arena *frame3DArena, Cells3D *outC3d,
-                                const Cells3D *inC3d);
+void EvolveGOL3D_NextGeneration(Evolve3DThreadCells *allThreadCells,
+                                Cells3D *outC3d, Cells3D *inC3d);
 
 static void __GOL3D_NextGenerationMultiThread(Evolve3DThreadCells *threadCells);
 static int __GOL3DCheckNeighbours(Cells3D *inC3d, int i);

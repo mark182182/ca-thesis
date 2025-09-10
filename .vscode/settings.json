@@ -100,7 +100,12 @@
     "win32_clipboard.h": "c",
     "string.h": "c",
     "common.h": "c",
-    "render_2d.h": "c"
+    "render_2d.h": "c",
+    "light.h": "c",
+    "tracyc.h": "c",
+    "stddef.h": "c",
+    "regex": "c",
+    "valarray": "c"
   },
   // Disable GitHub Copilot for C files
   "github.copilot.enable": {

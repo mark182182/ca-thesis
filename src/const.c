@@ -1,6 +1,7 @@
 #include "const.h"
 #include "raylib_shim.h"
 #include "dstructs/arena.h"
+#include "cellular/cells.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,8 +16,7 @@ extern const bool THREAD_DEFAULT_WAIT_FOR_ALL = true;
 extern const LPDWORD THREAD_DEFAULT_WAIT_MS = 1000;
 
 // raylib related defaults
-static const Color BLUISH_GREY =
-    CLITERAL(Color){105, 105, 130, 255};
+static const Color BLUISH_GREY = CLITERAL(Color){105, 105, 130, 255};
 
 const Color DEFAULT_RECT_COLOR = LIGHTGRAY;
 const Color DEFAULT_TEXT_COLOR = BLUISH_GREY;
@@ -28,6 +28,7 @@ const Color RANDOM_COLORS[24] = {
 // forward declarations
 Arena permanentArena;
 int numOfProcessors;
+int chunkSizePerThread;
 
 void InitializeConstants() {
   printf("=====Initialization start=====\n");
@@ -38,6 +39,8 @@ void InitializeConstants() {
   GetSystemInfo(&sysInfo);
 
   numOfProcessors = sysInfo.dwNumberOfProcessors;
+
+  chunkSizePerThread = CUBE_COUNT / numOfProcessors;
 
   printf("\nNum of processors: %d\n", numOfProcessors);
   printf("=====Initialization end=======\n");

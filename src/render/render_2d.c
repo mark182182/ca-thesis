@@ -5,7 +5,6 @@
 #include "raylib_shim.h"
 #include "cellular/cells.h"
 #include "dstructs/arena.h"
-#include <time.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include "const.h"
@@ -54,7 +53,6 @@ void Render2D_RenderMode(Render *render) {
   // would implement batched rendering, draw calls here
 
   if (render->isPaused == 0 && render->deltaTime >= render2d->render2DSpeed) {
-    clock_t time = clock();
     if (render2d->currentGeneration != 0 &&
         render2d->currentGeneration % 2 == 0) {
       EvolveGOL2D_NextGeneration(&render2d->firstC2d, &render2d->secondC2d);
@@ -78,7 +76,7 @@ void Render2D_RenderMode(Render *render) {
 
   // TODO: This should be drawn in a single call
   int aliveCells = 0;
-  
+
   for (int i = 0; i < CELL_COUNT; i++) {
     Color color = *actualCd->colors[i];
     // TODO: Revise this, just an example

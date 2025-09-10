@@ -6,13 +6,14 @@
 #include <stdlib.h>
 
 int main() {
+  InitializeConstants();
+
   // TODO: Enable debug or use Renderdoc instead
   // glEnable(GL_DEBUG_OUTPUT);
   // glDebugMessageCallback(myDebugCallback, NULL);
 
-  InitializeConstants();
-
   // load any long living resources here
+
   Render render = {
       .mode2DArena = NULL,
       .mode3DArena = NULL,

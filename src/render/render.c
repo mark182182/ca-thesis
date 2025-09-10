@@ -6,11 +6,14 @@
 #include <stdlib.h>
 #include "const.h"
 #include "menu.h"
-#include <time.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include "render_2d.h"
 #include "render_3d.h"
+
+#ifdef DEBUG_MODE
+#include "tracy/TracyC.h"
+#endif
 
 bool shouldClose = false;
 
@@ -26,8 +29,20 @@ void Render_RenderWindow(Render *render) {
   SetTargetFPS(render->fpsCap);
 
   while (!shouldClose) {
+#ifdef DEBUG_MODE
+    TracyCFrameMarkNamed("WindowLoop");
+#endif
+
     render->charPressed = GetCharPressed();
+#ifdef DEBUG_MODE
+    TracyCZoneN(ctx, "Menu_Update", true);
+#endif
+
     Menu_Update(render);
+
+#ifdef DEBUG_MODE
+    TracyCZoneEnd(ctx);
+#endif
 
     if (render->fpsCap == 60 && render->charPressed == 'c') {
       render->fpsCap = 0;
@@ -46,26 +61,34 @@ void Render_RenderWindow(Render *render) {
     }
 
     if (render->currentMode != render->prevMode) {
+#ifdef DEBUG_MODE
+      TracyCZoneN(ctx, "RenderModeChange", true);
+#endif
       // whenever we switch modes, we free everything
       render->isModeFirstFrame = true;
 
-      if (render->mode2DArena.used > 0) {
+      if (&render->mode2DArena != NULL && render->mode2DArena.used > 0) {
         Arena_FreeZeroed(&render->mode2DArena);
       }
 
-      if (render->frame2DArena.used > 0) {
+      if (&render->frame2DArena != NULL && render->frame2DArena.used > 0) {
         Arena_FreeZeroed(&render->frame2DArena);
       }
 
-      if (render->mode3DArena.used > 0) {
+      if (&render->mode3DArena != NULL && render->mode3DArena.used > 0) {
+        printf("currentMode: %s, prevMode: %s\n", render->currentMode,
+               render->prevMode);
         Arena_FreeZeroed(&render->mode3DArena);
       }
 
-      if (render->frame3DArena.used > 0) {
+      if (&render->frame3DArena != NULL && render->frame3DArena.used > 0) {
         Arena_FreeZeroed(&render->frame3DArena);
       }
 
       render->prevMode = render->currentMode;
+#ifdef DEBUG_MODE
+      TracyCZoneEnd(ctx);
+#endif
     }
 
     // select the current mode
@@ -95,7 +118,9 @@ void Render_RenderWindow(Render *render) {
         Render3D render3d = Render3D_Init(render);
         render->render3d = &render3d;
       }
+
       Render3D_RenderMode(render);
+
       if (render->isModeFirstFrame) {
         render->isModeFirstFrame = false;
       }

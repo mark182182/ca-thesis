@@ -44,6 +44,7 @@ extern const Color RANDOM_COLORS[24];
 extern Arena permanentArena;
 
 extern int numOfProcessors;
+extern int chunkSizePerThread;
 
 // any constant expression that cannot be initialized at compile time
 void InitializeConstants();
