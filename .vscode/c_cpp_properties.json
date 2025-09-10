@@ -5,8 +5,8 @@
       "includePath": ["${workspaceFolder}/**"],
       "defines": ["_DEBUG", "UNICODE", "_UNICODE"],
       "windowsSdkVersion": "10.0.26100.0",
-      "cStandard": "c17",
-      "cppStandard": "c++17",
+      "cStandard": "c11",
+      "cppStandard": "c++11",
       "intelliSenseMode": "windows-clang-x64",
       "compilerArgs": [
         // Does not do anything in case of VSCode, because we need to compile the actual code itself to get these warnings

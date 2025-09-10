@@ -6,9 +6,7 @@
 
 #include "raylib_shim.h"
 
-#ifdef DEBUG_MODE
 #include "tracy/TracyC.h"
-#endif
 
 static void __ExitWithMsg(char *msg) {
   fprintf(stderr, "Error: %s\n", msg);
@@ -74,9 +72,7 @@ void *__Arena_Alloc(Arena *arena, size_t size, size_t alignment,
 
   arena->used = newUsedSize;
 
-#ifdef DEBUG_MODE
   TracyCAlloc(alignedAddr, newUsedSize);
-#endif
   return (void *)alignedAddr;
 }
 

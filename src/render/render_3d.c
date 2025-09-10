@@ -10,9 +10,7 @@
 #include "cellular/evolve.h"
 #include "light.h"
 
-#ifdef DEBUG_MODE
 #include "tracy/TracyC.h"
-#endif
 
 static int currentGeneration = 0;
 
@@ -158,15 +156,11 @@ Render3D Render3D_Init(Render *render) {
 //                .color = RED,
 //                .attenuation = 1.0F};
 void Render3D_RenderMode(Render *render) {
-#ifdef DEBUG_MODE
   TracyCFrameMarkNamed("Render3D_RenderModeFrameMark");
   TracyCZoneN(all3dRenderMode, "All3dRenderMode", true);
-#endif
 
   if (render->isModeFirstFrame) {
-#ifdef DEBUG_MODE
     TracyCZoneN(mode3dInitCtx, "Mode3dInitCtx", true);
-#endif
 
     printf("Rendering 3D mode\n");
     Cells3D_InitArraysBasedOnCellSize(&render->mode3DArena,
@@ -177,16 +171,12 @@ void Render3D_RenderMode(Render *render) {
     Evolve3D_InitializeCells(&render->render3d->firstC3d, true);
     Evolve3D_InitializeCells(&render->render3d->secondC3d, false);
 
-#ifdef DEBUG_MODE
     TracyCZoneEnd(mode3dInitCtx);
-#endif
   }
 
   if (render->deltaTime >= render->render3d->render3DSpeed) {
 
-#ifdef DEBUG_MODE
     TracyCZoneN(ctx, "EvolveGOL3D_NextGeneration", true);
-#endif
     if (currentGeneration != 0 && currentGeneration % 2 == 0) {
       EvolveGOL3D_NextGeneration(render->render3d->allThreadCells,
                                  &render->render3d->firstC3d,
@@ -196,9 +186,7 @@ void Render3D_RenderMode(Render *render) {
                                  &render->render3d->secondC3d,
                                  &render->render3d->firstC3d);
     }
-#ifdef DEBUG_MODE
     TracyCZoneEnd(ctx);
-#endif
     currentGeneration++;
     render->deltaTime = 0;
 
@@ -217,9 +205,7 @@ void Render3D_RenderMode(Render *render) {
   }
   render->deltaTime += GetFrameTime();
 
-#ifdef DEBUG_MODE
   TracyCZoneN(beforeWaitCtx, "Render3DBeforeWait", true);
-#endif
   Cells3D *actualCd = currentGeneration % 2 == 0 ? &render->render3d->secondC3d
                                                  : &render->render3d->firstC3d;
 
@@ -254,17 +240,13 @@ void Render3D_RenderMode(Render *render) {
     doneEvents[i] = render->render3d->allThreadCubes[i].doneEvent;
   }
 
-#ifdef DEBUG_MODE
   TracyCZoneEnd(beforeWaitCtx);
 
   TracyCZoneN(beforeDuringCtx, "Render3DDuringWait", true);
-#endif
   DWORD waitResult = WaitForMultipleObjects(numOfProcessors, doneEvents,
                                             THREAD_DEFAULT_WAIT_FOR_ALL,
                                             THREAD_DEFAULT_WAIT_MS);
-#ifdef DEBUG_MODE
   TracyCZoneEnd(beforeDuringCtx);
-#endif
 
   switch (waitResult) {
     // return value within the specified range indicates that the state of all
@@ -283,16 +265,12 @@ void Render3D_RenderMode(Render *render) {
   bool isColliding = false;
   Matrix collMatrix = {0};
 
-#ifdef DEBUG_MODE
   TracyCZoneN(cursorRayCtx, "CursorRay", true);
-#endif
   Ray cursorRay =
       GetScreenToWorldRay(GetMousePosition(), render->render3d->camera);
-#ifdef DEBUG_MODE
   TracyCZoneEnd(cursorRayCtx);
 
   TracyCZoneN(rayCollisionCtx, "RayCollision", true);
-#endif
   // NOTE: since this is not thread-safe and have to call this in the main
   // thread due to the OpenGL context. Another way to do this would be to create
   // a custom method that can replace the raylib collision test that can be
@@ -319,7 +297,6 @@ void Render3D_RenderMode(Render *render) {
       }
     }
   }
-#ifdef DEBUG_MODE
   TracyCZoneEnd(rayCollisionCtx);
 
   // TODO: draw this in the 3D menu instead
@@ -327,7 +304,7 @@ void Render3D_RenderMode(Render *render) {
   // printf("\nDrawn %d cubes\n", tIdx + 1);
 
   TracyCZoneN(draw3dCtx, "Draw3d", true);
-#endif
+
   Render_BeginDrawing();
 
   BeginMode3D(render->render3d->camera);
@@ -348,19 +325,15 @@ void Render3D_RenderMode(Render *render) {
 
   EndMode3D();
 
-#ifdef DEBUG_MODE
   TracyCZoneEnd(draw3dCtx);
 
   TracyCZoneN(render3dFrameArenaFree, "Render3DFrameArena_FreeZeroed", true);
-#endif
 
   Arena_Free(&render->frame3DArena);
 
-#ifdef DEBUG_MODE
   TracyCZoneEnd(render3dFrameArenaFree);
 
   TracyCZoneEnd(all3dRenderMode);
-#endif
 }
 
 // TODO: teardown properly
@@ -388,9 +361,7 @@ __Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes) {
       continue;
     }
 
-#ifdef DEBUG_MODE
     TracyCZoneN(ctx, "ResolveTransformMatrixZone", true);
-#endif
 
     Cells3D *actualCd = threadCubes->actualCd;
     Camera *camera = threadCubes->camera;
@@ -434,8 +405,6 @@ __Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes) {
     }
     // threads will signal the end of the work, render thread will consume
     SetEvent(threadCubes->doneEvent);
-#ifdef DEBUG_MODE
     TracyCZoneEnd(ctx);
-#endif
   }
 }

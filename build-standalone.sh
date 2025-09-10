@@ -5,15 +5,15 @@ source "$(dirname "$0")/common.sh"
 
 cd "tests/standalone"
 
-rm -rf build
-mkdir -p build
+rm -rf "$output_dir"
+mkdir -p "$output_dir"
 
 export CC=clang
-cmake -S . -B build \
+cmake -S . -B "$output_dir" \
     -G "MinGW Makefiles" \
     -DCMAKE_BUILD_TYPE="DEBUG" \
     -DCMAKE_C_COMPILER="C:/msys64/mingw64/bin/clang.exe" \
     -DCMAKE_MAKE_PROGRAM="make" \
     -DCOMMON_FLAGS="$COMMON_FLAGS"
 
-cmake --build build
+cmake --build "$output_dir"

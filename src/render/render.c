@@ -11,9 +11,7 @@
 #include "render_2d.h"
 #include "render_3d.h"
 
-#ifdef DEBUG_MODE
 #include "tracy/TracyC.h"
-#endif
 
 bool shouldClose = false;
 
@@ -29,20 +27,14 @@ void Render_RenderWindow(Render *render) {
   SetTargetFPS(render->fpsCap);
 
   while (!shouldClose) {
-#ifdef DEBUG_MODE
     TracyCFrameMarkNamed("WindowLoop");
-#endif
 
     render->charPressed = GetCharPressed();
-#ifdef DEBUG_MODE
     TracyCZoneN(ctx, "Menu_Update", true);
-#endif
 
     Menu_Update(render);
 
-#ifdef DEBUG_MODE
     TracyCZoneEnd(ctx);
-#endif
 
     if (render->fpsCap == 60 && render->charPressed == 'c') {
       render->fpsCap = 0;
@@ -61,9 +53,7 @@ void Render_RenderWindow(Render *render) {
     }
 
     if (render->currentMode != render->prevMode) {
-#ifdef DEBUG_MODE
       TracyCZoneN(ctx, "RenderModeChange", true);
-#endif
       // whenever we switch modes, we free everything
       render->isModeFirstFrame = true;
 
@@ -86,9 +76,7 @@ void Render_RenderWindow(Render *render) {
       }
 
       render->prevMode = render->currentMode;
-#ifdef DEBUG_MODE
       TracyCZoneEnd(ctx);
-#endif
     }
 
     // select the current mode

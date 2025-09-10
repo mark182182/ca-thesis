@@ -13,21 +13,6 @@ if ! command -v make &> /dev/null; then
     exit 1
 fi
 
-if [[ "$*" =~ "--build_type" ]]; then
-    build_type=$(echo "$*" | grep -oP '(?<=--build_type\s)\w+')
-    echo "Build type specified: $build_type"
-else
-    echo "No build type specified. Defaulting to 'DEBUG'."
-    build_type="DEBUG"
-fi
-
-if [[ "$*" == *"--rebuild"* ]]; then
-    echo "Rebuilding the project..."
-    rm -rf build
-else
-    echo "Building the project..."
-fi
-
 verbose_mode=""
 if [[ "$*" == *"-v"* ]]; then
     echo "Verbose mode enabled."
@@ -73,16 +58,28 @@ if [[ "$*" == *"--tests"* ]]; then
     echo "Including tests in the build."
     include_tests="ON"
 fi
-cp "C:/msys64/mingw64/bin/libgcc_s_seh-1.dll" build/
-cp "C:/msys64/mingw64/bin/libwinpthread-1.dll" build/
-cp "C:/msys64/mingw64/bin/libstdc++-6.dll" build/
 
+tracy_enable=""
+if [[ "$*" == *"--tracy"* ]]; then
+    if [[ "$build_type" != "DEBUG" ]]; then
+        echo "Error: Tracy profiler can only be enabled in DEBUG build type."
+        exit 1
+    fi
+    echo "Tracy profiler enabled."
+    tracy_enable="ON"
 
+    # need to copy the standard C++ runtime libraries for Tracy to work
+    cp "C:/msys64/mingw64/bin/libgcc_s_seh-1.dll" "$output_dir"
+    cp "C:/msys64/mingw64/bin/libwinpthread-1.dll" "$output_dir"
+    cp "C:/msys64/mingw64/bin/libstdc++-6.dll" "$output_dir"
+fi
 
 export CC="C:/msys64/mingw64/bin/clang.exe"
 export CXX="C:/msys64/mingw64/bin/clang++.exe"
 
-cmake -S . -B build \
+echo "Building CMake configuration..."
+start_time=$(date +%s%3N)
+cmake -S . -B "$output_dir" \
     -G "MinGW Makefiles" \
     -DCMAKE_BUILD_TYPE="$build_type" \
     -DCMAKE_C_COMPILER="$CC" \
@@ -95,15 +92,20 @@ cmake -S . -B build \
     -DCOMMON_FLAGS_COMPAT="$COMMON_FLAGS_COMPAT" \
     -DRAYLIB_VERSION="$raylib_version" \
     -DTRACY_VERSION="$tracy_version" \
+    -DTRACY_ENABLE="$tracy_enable" \
     -DGRAPHICS_COMPAT_LEVEL="$graphics_compat_level" \
     -DGRAPHICS_LEVEL="$graphics_level" \
     -DINCLUDE_TESTS="$include_tests"
+echo "CMake configuration completed in $(($(date +%s%3N) - start_time)) ms."
 
+
+start_time=$(date +%s%3N)
+echo "Building the project..."
 # build the project
-cmake --build build $verbose_mode
+cmake --build "$output_dir" $verbose_mode --parallel
 
 if [ $? -eq 0 ]; then
-    echo "Build completed successfully"
+    echo "Build completed successfully in $(($(date +%s%3N) - start_time)) ms."
 else
     echo "Build failed"
     exit 1
@@ -111,6 +113,6 @@ fi
 
 if [[ "$include_tests" == "ON" ]]; then
     echo "Running tests..."
-    cd build
+    cd "$output_dir"
     ctest --output-on-failure
 fi

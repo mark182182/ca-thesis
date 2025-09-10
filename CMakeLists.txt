@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.11) # FetchContent is available in 3.11+
 
-# Set the C standard to C17, as it's one of the most recent stable standards, widely supported.
+# Set the C standard to C11, as it's one of the most recent stable standards, widely supported.
 # NOTE: The project is using C, but some dependencies (like tracy) require C++.
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 if (MSVC)
     # For MSVC, set the runtime library to MultiThreaded for release builds
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:DEBUG>:DEBUG>")
 else()
     # For other compilers, use the default C runtime library
     set(CMAKE_C_STANDARD_LIBRARIES "")
@@ -132,42 +132,43 @@ endif()
 # Platform-specific libraries to link against
 set(PLATFORM_LIBS "")
 
-if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    enable_language(CXX)
-    # Set C++ flags to match C flags
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+enable_language(CXX)
+# Set C++ flags to match C flags
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
-    include(FetchContent)
-    FetchContent_Declare(
-        tracy
-        DOWNLOAD_EXTRACT_TIMESTAMP OFF
-        GIT_REPOSITORY
-        https://github.com/wolfpld/tracy.git
-        GIT_TAG
-        v${TRACY_VERSION}
-        GIT_SHALLOW
-        TRUE
-        GIT_PROGRESS
-        TRUE
-        SOURCE_DIR "${TRACY_CACHE_DIR}"
-    )
+include(FetchContent)
+FetchContent_Declare(
+    tracy
+    DOWNLOAD_EXTRACT_TIMESTAMP OFF
+    GIT_REPOSITORY
+    https://github.com/wolfpld/tracy.git
+    GIT_TAG
+    v${TRACY_VERSION}
+    GIT_SHALLOW
+    TRUE
+    GIT_PROGRESS
+    TRUE
+    SOURCE_DIR "${TRACY_CACHE_DIR}"
+)
 
-    FetchContent_MakeAvailable(tracy)
+FetchContent_MakeAvailable(tracy)
 
-    set_target_properties(TracyClient PROPERTIES
-        CXX_STANDARD 17
-        CXX_STANDARD_REQUIRED ON
-    )
+set_target_properties(TracyClient PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+)
 
-    # link against static C++ standard library
-    target_link_options(TracyClient PRIVATE -static-libgcc -static-libstdc++ -static-libwinpthread)
+# link against static C++ standard library
+target_link_options(TracyClient PRIVATE -static-libgcc -static-libstdc++ -static-libwinpthread)
 
+if (TRACY_ENABLE)
+    message(STATUS "Adding Tracy profiler support to compile definitions.")
     target_compile_definitions(${EXECUTABLE_NAME} PRIVATE TRACY_ENABLE)
-    target_link_libraries(${EXECUTABLE_NAME} PRIVATE TracyClient)
-
-    set(DEBUG_MODE TRUE)
+else()
+    message(STATUS "Tracy profiler support disabled.")
 endif()
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE TracyClient)
 
 if(MSVC OR MINGW OR MINGW32 OR MINGW64)
     # For MSVC or MinGW, link against Windows libraries

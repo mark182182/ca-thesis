@@ -5,9 +5,7 @@
 #include <stdlib.h>
 #include "raylib_shim.h"
 
-#ifdef DEBUG_MODE
 #include "tracy/TracyC.h"
-#endif
 
 int rule1DBits = 0x00000000;
 
@@ -226,9 +224,7 @@ __GOL3D_NextGenerationMultiThread(Evolve3DThreadCells *threadCells) {
       continue;
     }
 
-#ifdef DEBUG_MODE
     TracyCZoneN(ctx, "__GOL3D_NextGenerationMultiThread", true);
-#endif
 
     for (int i = threadCells->startIdx; i < threadCells->endIdx; i++) {
       int neighbours = __GOL3DCheckNeighbours(threadCells->inC3d, i);
@@ -247,9 +243,7 @@ __GOL3D_NextGenerationMultiThread(Evolve3DThreadCells *threadCells) {
       }
     }
     SetEvent(threadCells->doneEvent);
-#ifdef DEBUG_MODE
     TracyCZoneEnd(ctx);
-#endif
   }
 }
 
