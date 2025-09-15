@@ -12,8 +12,6 @@
 
 #include "tracy/TracyC.h"
 
-static int currentGeneration = 0;
-
 Render3D Render3D_Init(Render *render) {
   Arena mode3DArena =
       Arena_Init("modeArena", &mode3DArenaStorage, MODE_3D_STORAGE_SIZE);
@@ -34,7 +32,7 @@ Render3D Render3D_Init(Render *render) {
   Mesh selectionCube = GenMeshCube(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
 
   // transforms to be uploaded to GPU for instances
-  Matrix *transforms = Arena_AllocAlignedZeroed(&render->frame3DArena,
+  Matrix *transforms = Arena_AllocAlignedZeroed(&render->mode3DArena,
                                                 CUBE_COUNT * sizeof(Matrix),
                                                 DEFAULT_MATRIX_ALIGNMENT);
 
@@ -62,9 +60,6 @@ Render3D Render3D_Init(Render *render) {
   Material matInstances = LoadMaterialDefault();
   matInstances.shader = shader;
   matInstances.maps[MATERIAL_MAP_DIFFUSE].color = RED;
-
-  Material matSelection = LoadMaterialDefault();
-  matSelection.maps[MATERIAL_MAP_DIFFUSE].color = YELLOW;
 
   if (!IsMaterialValid(matInstances)) {
     printf("Invalid material with shader id: %d\n", matInstances.shader.id);
@@ -133,16 +128,24 @@ Render3D Render3D_Init(Render *render) {
     }
   }
 
-  Render3D render3d = {.camera = camera,
-                       .cube = cube,
-                       .matInstances = matInstances,
-                       .matSelection = matSelection,
-                       .render3DSpeed = 0.4f,
-                       .transforms = transforms,
-                       .allThreadCells = allThreadCells,
-                       .nextGenThreads = nextGenThreads,
-                       .allThreadCubes = allThreadCubes,
-                       .transformMatrixThreads = transformMatrixThreads};
+  Menu3D menu3d = Menu3D_Init(render);
+
+  Render3D render3d = {
+      .menu3d = menu3d,
+      .camera = camera,
+      .freezeCamera = true,
+      .cameraMode = CAMERA_FREE,
+      .cube = cube,
+      .matInstances = matInstances,
+      .render3dSpeed = 0.4f,
+      .transforms = transforms,
+      .allThreadCells = allThreadCells,
+      .nextGenThreads = nextGenThreads,
+      .allThreadCubes = allThreadCubes,
+      .transformMatrixThreads = transformMatrixThreads,
+      .currentGeneration = 0,
+      .randGridDensity = CUBE_INITIAL_GRID_DENSITY,
+  };
   return render3d;
 }
 
@@ -159,6 +162,7 @@ void Render3D_RenderMode(Render *render) {
   TracyCFrameMarkNamed("Render3D_RenderModeFrameMark");
   TracyCZoneN(all3dRenderMode, "All3dRenderMode", true);
 
+  // NOTE: this could be part of Render3D_Init
   if (render->isModeFirstFrame) {
     TracyCZoneN(mode3dInitCtx, "Mode3dInitCtx", true);
 
@@ -168,16 +172,20 @@ void Render3D_RenderMode(Render *render) {
     Cells3D_InitArraysBasedOnCellSize(&render->mode3DArena,
                                       &render->render3d->secondC3d);
 
-    Evolve3D_InitializeCells(&render->render3d->firstC3d, true);
-    Evolve3D_InitializeCells(&render->render3d->secondC3d, false);
+    Evolve3D_InitializeCells(&render->render3d->firstC3d, false,
+                             render->render3d->randGridDensity);
+    Evolve3D_InitializeCells(&render->render3d->secondC3d, false,
+                             render->render3d->randGridDensity);
 
     TracyCZoneEnd(mode3dInitCtx);
   }
 
-  if (render->deltaTime >= render->render3d->render3DSpeed) {
+  if (render->isPaused == false &&
+      render->deltaTime >= render->render3d->render3dSpeed) {
 
     TracyCZoneN(ctx, "EvolveGOL3D_NextGeneration", true);
-    if (currentGeneration != 0 && currentGeneration % 2 == 0) {
+    if (render->render3d->currentGeneration != 0 &&
+        render->render3d->currentGeneration % 2 == 0) {
       EvolveGOL3D_NextGeneration(render->render3d->allThreadCells,
                                  &render->render3d->firstC3d,
                                  &render->render3d->secondC3d);
@@ -187,7 +195,7 @@ void Render3D_RenderMode(Render *render) {
                                  &render->render3d->firstC3d);
     }
     TracyCZoneEnd(ctx);
-    currentGeneration++;
+    render->render3d->currentGeneration++;
     render->deltaTime = 0;
 
     // // TODO: PoC for lighting
@@ -206,10 +214,25 @@ void Render3D_RenderMode(Render *render) {
   render->deltaTime += GetFrameTime();
 
   TracyCZoneN(beforeWaitCtx, "Render3DBeforeWait", true);
-  Cells3D *actualCd = currentGeneration % 2 == 0 ? &render->render3d->secondC3d
-                                                 : &render->render3d->firstC3d;
+  Cells3D *actualCd = render->render3d->currentGeneration % 2 == 0
+                          ? &render->render3d->firstC3d
+                          : &render->render3d->secondC3d;
 
-  UpdateCamera(&render->render3d->camera, CAMERA_FREE);
+  if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+    if (!render->render3d->freezeCamera) {
+      render->render3d->cameraMode = CAMERA_PERSPECTIVE;
+      render->render3d->freezeCamera = true;
+    } else {
+      render->render3d->cameraMode = CAMERA_FREE;
+      render->render3d->freezeCamera = false;
+    }
+    render->isMouseRestricted = !render->render3d->menu3d.isVisible &&
+                                !render->menu->isVisible &&
+                                !render->render3d->freezeCamera;
+  }
+
+  UpdateCamera(&render->render3d->camera, render->render3d->cameraMode);
+
   float cameraPos[3] = {render->render3d->camera.position.x,
                         render->render3d->camera.position.y,
                         render->render3d->camera.position.z};
@@ -261,9 +284,7 @@ void Render3D_RenderMode(Render *render) {
     break;
   }
 
-  // TODO: revise this, so it's not that highly coupled, if possible
-  bool isColliding = false;
-  Matrix collMatrix = {0};
+  Vector3 collPoint = {0};
 
   TracyCZoneN(cursorRayCtx, "CursorRay", true);
   Ray cursorRay =
@@ -275,35 +296,45 @@ void Render3D_RenderMode(Render *render) {
   // thread due to the OpenGL context. Another way to do this would be to create
   // a custom method that can replace the raylib collision test that can be
   // parallelized.
-  for (int i = 0; i < numOfProcessors && !isColliding; i++) {
-    Render3DThreadCubes threadCubes = render->render3d->allThreadCubes[i];
-    for (int j = threadCubes.startIdx; j < threadCubes.endIdx && !isColliding;
-         j++) {
-      Matrix transformedMatrix = threadCubes.transforms[j];
-      // raycast to the nearest cube
-      RayCollision cursorCubeCollision = GetRayCollisionMesh(
-          cursorRay, render->render3d->cube, transformedMatrix);
 
-      if (cursorCubeCollision.hit && !isColliding) {
+  bool isMouseOnCube = false;
+  if (render->render3d->isEditing) {
+    for (int i = 0; i < CUBE_COUNT && !isMouseOnCube; i++) {
+      int x = actualCd->positionsX[i];
+      int y = actualCd->positionsY[i];
+      int z = actualCd->positionsZ[i];
+
+      // printf("x: %d \n", x);
+      // printf("y: %d \n", y);
+      // printf("z: %d \n", z);
+
+      // raycast to the nearest cube
+      RayCollision cursorCubeCollision = GetRayCollisionBox(
+          cursorRay,
+          (BoundingBox){
+              (Vector3){x - CUBE_SIZE, y - CUBE_SIZE, z - CUBE_SIZE},
+              (Vector3){x + CUBE_SIZE, y + CUBE_SIZE, z + CUBE_SIZE}});
+
+      if (cursorCubeCollision.hit) {
+        // TODO: we need to account for the user pressing the edit button (or
+        // any menu item), since that mouse press will invoke this as well
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
           actualCd->is_alive[i] = !actualCd->is_alive[i];
-          collMatrix = transformedMatrix;
-          isColliding = true;
         }
-        int x = actualCd->positionsX[i];
-        int y = actualCd->positionsY[i];
-        int z = actualCd->positionsZ[i];
+        collPoint = (Vector3){x, y, z};
+        isMouseOnCube = true;
         // printf("Collision with: x=%d, y=%d, z=%d\n", x, y, z);
       }
     }
   }
+
   TracyCZoneEnd(rayCollisionCtx);
 
   // TODO: draw this in the 3D menu instead
   // printf("aliveCells: %d\n", actualCd->aliveCells);
   // printf("\nDrawn %d cubes\n", tIdx + 1);
 
-  TracyCZoneN(draw3dCtx, "Draw3d", true);
+  TracyCZoneN(draw3dCtx, "AlllDraw3dCalls", true);
 
   Render_BeginDrawing();
 
@@ -314,16 +345,39 @@ void Render3D_RenderMode(Render *render) {
   DrawMeshInstanced(render->render3d->cube, render->render3d->matInstances,
                     render->render3d->transforms, CUBE_COUNT);
 
-  if (isColliding) {
-    DrawMesh(render->render3d->cube, render->render3d->matSelection,
-             collMatrix);
+  bool isMouseOnMenu = CheckCollisionPointRec(
+      GetMousePosition(), render->render3d->menu3d.containerRect);
+
+  if (__Render3D_CanEditCell(render, isMouseOnMenu, isMouseOnCube)) {
+    DrawCubeV(collPoint,
+              (Vector3){.x = CUBE_SCALE, .y = CUBE_SCALE, .z = CUBE_SCALE},
+              YELLOW);
   }
+
+  DrawBoundingBox(
+      (BoundingBox){(Vector3){0, 0, 0}, (Vector3){CUBE_SCALE * MAX_CUBES_X,
+                                                  CUBE_SCALE * MAX_CUBES_Y,
+                                                  CUBE_SCALE * MAX_CUBES_Z}},
+      GREEN);
 
   Render_LogGlError();
 
   DrawGrid(100, 1.0f);
 
   EndMode3D();
+
+  // NOTE: this has to be drawn after EndMode3D
+  if (__Render3D_CanEditCell(render, isMouseOnMenu, isMouseOnCube)) {
+    Vector2 position = {.x = 100, .y = 200}; // relative to mouse
+    char posText[32];
+    snprintf(posText, sizeof(posText), "cubeX: %.2f, cubeY: %.2f", collPoint.x,
+             collPoint.y);
+
+    DrawTextEx(render->menu->selectedFont, posText, GetMousePosition(),
+               SUB_FONT_SIZE, 0, DEFAULT_TEXT_COLOR);
+  }
+
+  Menu3D_Draw(render);
 
   TracyCZoneEnd(draw3dCtx);
 
@@ -345,7 +399,51 @@ void Render3D_RenderMode(Render *render) {
 // }
 // }
 
-// TODO: profile this and make necessary performance improvements, if needed
+void Render3D_EditCells(Render *render) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    render->render3d->isEditing = !render->render3d->isEditing;
+  }
+}
+
+void Render3D_IncrementGridDensity(Render *render) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) &&
+      render->render3d->randGridDensity < CUBE_MAX_GRID_DENSITY) {
+    render->render3d->randGridDensity++;
+  }
+}
+
+void Render3D_DecrementGridDensity(Render *render) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) &&
+      render->render3d->randGridDensity > CUBE_MIN_GRID_DENSITY) {
+    render->render3d->randGridDensity--;
+  }
+}
+
+void Render3D_ResetCells(Render *render) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    Evolve3D_InitializeCells(&render->render3d->firstC3d, false,
+                             render->render3d->randGridDensity);
+    Evolve3D_InitializeCells(&render->render3d->secondC3d, false,
+                             render->render3d->randGridDensity);
+    render->render3d->currentGeneration = 0;
+  }
+}
+
+void Render3D_RandomizeZeroGen(Render *render) {
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    Evolve3D_InitializeCells(&render->render3d->firstC3d, true,
+                             render->render3d->randGridDensity);
+    render->render3d->currentGeneration = 0;
+  }
+}
+
+// !!!! IMPORTANT !!!!
+// !!!! IMPORTANT !!!!
+
+// TODO: fix the multithreading issue
+
+// !!!! IMPORTANT !!!!
+// !!!! IMPORTANT !!!!
 static void
 __Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes) {
   for (;;) {
@@ -387,24 +485,37 @@ __Render3D_ResolveTransformMatrix(Render3DThreadCubes *threadCubes) {
       int y = actualCd->positionsY[i];
       int z = actualCd->positionsZ[i];
 
-      // since the arena is reset on every frame, we can just set the alive
-      // cells
-
-      Matrix translation = MatrixTranslate(x, y, z);
-      // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
-
-      Matrix scale = MatrixScale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
-
-      // with no gaps between the cubes
-      Matrix mul = MatrixMultiply(translation, scale);
-      // with gaps
-      // Matrix mul = MatrixMultiply(scale, translation);
+      // TODO: aliveCells is reset on every frame, but we need to account
+      // for incrementing it in multiple threads
 
       actualCd->aliveCells++;
+      Matrix mul = __Render3D_TranslatePointsIntoMatrix(x, y, z);
       transforms[i] = mul;
     }
     // threads will signal the end of the work, render thread will consume
     SetEvent(threadCubes->doneEvent);
     TracyCZoneEnd(ctx);
   }
+}
+
+static Matrix __Render3D_TranslatePointsIntoMatrix(float x, float y, float z) {
+  Matrix translation = MatrixTranslate(x, y, z);
+  // printf("\nx: %d, y: %d, z: %d\n", x, y, z);
+
+  Matrix scale = MatrixScale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
+
+  // with no gaps between the cubes
+  Matrix mul = MatrixMultiply(translation, scale);
+  // with gaps
+  // Matrix mul = MatrixMultiply(scale, translation);
+
+  return mul;
+}
+
+static bool __Render3D_CanEditCell(Render *render, bool isMouseOnMenu,
+                                   bool isMouseOnCube) {
+  return render->render3d->isEditing &&
+         ((render->render3d->menu3d.isVisible && !isMouseOnMenu &&
+           isMouseOnCube) ||
+          (!render->render3d->menu3d.isVisible && isMouseOnCube));
 }

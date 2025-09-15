@@ -46,11 +46,12 @@ typedef struct Evolve3DThreadCells {
  * grid, with optionally setting the alive state at random.
  */
 void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive,
-                              int gridDensity);
+                              int randGridDensity);
 /*
  *Same as in 2D
  */
-void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive);
+void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive,
+                              int randGridDensity);
 
 /*
  * Evolves the given grid to the next generation for 2D rendering.

@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include "render.h"
 #include "common.h"
+#include "render_3d.h"
 
 MenuDrawItem MenuDrawItem_InitWithDefaults(Render *render) {
   return (MenuDrawItem){.alignment = MENU_DRAW_ALIGNMENT_VERTICAL,
@@ -47,9 +48,6 @@ MainMenu Menu_Init() {
 void Menu_Update(Render *render) {
   if (IsKeyPressed(KEY_ESCAPE)) {
     render->menu->isVisible = !render->menu->isVisible;
-    if (render->currentMode == RENDER_MODE_3D) {
-      render->isMouseRestricted = !render->menu->isVisible;
-    }
   }
 }
 
@@ -186,7 +184,6 @@ static void __OnCollInit3DMode(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
     render->currentMode = RENDER_MODE_3D;
     render->menu->isVisible = false;
-    render->isMouseRestricted = true;
   }
 }
 

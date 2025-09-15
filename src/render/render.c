@@ -66,8 +66,6 @@ void Render_RenderWindow(Render *render) {
       }
 
       if (&render->mode3DArena != NULL && render->mode3DArena.used > 0) {
-        printf("currentMode: %s, prevMode: %s\n", render->currentMode,
-               render->prevMode);
         Arena_FreeZeroed(&render->mode3DArena);
       }
 

@@ -1,13 +1,13 @@
-#include "menu_2d.h"
+#include "menu_3d.h"
 #include "raylib_shim.h"
 #include "menu.h"
 #include "render.h"
-#include "render_2d.h"
+#include "render_3d.h"
 #include <stdio.h>
 #include "const.h"
 #include "common.h"
 
-Menu2D Menu2D_Init(Render *render) {
+Menu3D Menu3D_Init(Render *render) {
   // draw a container on the right hand side of the screen
   Rectangle containerRect = (Rectangle){
       .x = SCREEN_WIDTH - (SCREEN_WIDTH / SCRREN_DIV_RATIO),
@@ -16,17 +16,22 @@ Menu2D Menu2D_Init(Render *render) {
       .height = SCREEN_HEIGHT,
   };
 
-  return (Menu2D){.isVisible = true, .containerRect = containerRect};
+  return (Menu3D){.isVisible = true, .containerRect = containerRect};
 }
 
-void Menu2D_Draw(Render *render) {
+/*
+ * NOTE: After 3D is done and have the time: multiple rules
+ * - Select built-in rules to use
+ * - The user can write their custom rules (using fixed UI elements or maybe
+ * Lua?)
+ */
+void Menu3D_Draw(Render *render) {
   char *minimizeText = "=Max=";
 
-  if (render->render2d->menu2d.isVisible) {
-
+  if (render->render3d->menu3d.isVisible) {
     minimizeText = "=Min=";
 
-    DrawRectangleRec(render->render2d->menu2d.containerRect,
+    DrawRectangleRec(render->render3d->menu3d.containerRect,
                      (Color){DEFAULT_RECT_COLOR.r, DEFAULT_RECT_COLOR.b,
                              DEFAULT_RECT_COLOR.g, 150});
 
@@ -43,19 +48,19 @@ void Menu2D_Draw(Render *render) {
     MenuDrawItem blankItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     blankItem.textToDraw = " ";
 
-    char render2DSpeedText[32];
-    snprintf(render2DSpeedText, sizeof(render2DSpeedText),
-             "Render speed: % .3f", render->render2d->render2dSpeed);
+    char render3DSpeedText[32];
+    snprintf(render3DSpeedText, sizeof(render3DSpeedText),
+             "Render speed: % .3f", render->render3d->render3dSpeed);
 
     MenuDrawItem renderSpeedItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
-    renderSpeedItem.textToDraw = render2DSpeedText;
+    renderSpeedItem.textToDraw = render3DSpeedText;
 
     MenuDrawItem ruleItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     ruleItem.textToDraw = "Current rule: Game of Life";
 
     char currGenText[32];
     snprintf(currGenText, sizeof(currGenText), "Current generation: %d",
-             render->render2d->currentGeneration);
+             render->render3d->currentGeneration);
 
     MenuDrawItem currGenItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     currGenItem.textToDraw = currGenText;
@@ -63,17 +68,17 @@ void Menu2D_Draw(Render *render) {
     char aliveCellsText[32];
     snprintf(aliveCellsText, sizeof(aliveCellsText),
              "Alive current gen cells: %d",
-             render->render2d->firstC2d.aliveCells);
+             render->render3d->firstC3d.aliveCells);
 
     MenuDrawItem aliveCellsItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     aliveCellsItem.textToDraw = aliveCellsText;
 
-    MenuDrawItem controlItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
-    controlItem.textToDraw = "==Controls==";
-
     char pauseText[32];
     snprintf(pauseText, sizeof(pauseText), "Pause state: %s",
              boolToString(render->isPaused));
+
+    MenuDrawItem controlItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
+    controlItem.textToDraw = "==Controls==";
 
     MenuDrawItem pauseItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     pauseItem.textToDraw = pauseText;
@@ -81,15 +86,15 @@ void Menu2D_Draw(Render *render) {
 
     char editText[32];
     snprintf(editText, sizeof(editText), "Edit state: %s",
-             boolToString(render->render2d->isEditing));
+             boolToString(render->render3d->isEditing));
 
     MenuDrawItem editItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     editItem.textToDraw = editText;
-    editItem.onCollisionFn = Render2D_EditCells;
+    editItem.onCollisionFn = Render3D_EditCells;
 
     char gridDensityText[32];
     snprintf(gridDensityText, sizeof(gridDensityText),
-             "Rand. grid density: %d ", render->render2d->randGridDensity);
+             "Rand. grid density: %d ", render->render3d->randGridDensity);
 
     MenuDrawItem gridDensityItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     gridDensityItem.textToDraw = gridDensityText;
@@ -97,20 +102,20 @@ void Menu2D_Draw(Render *render) {
     MenuDrawItem densitySubItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     densitySubItem.textToDraw = "[-]";
     densitySubItem.alignment = MENU_DRAW_ALIGNMENT_HORIZONTAL;
-    densitySubItem.onCollisionFn = Render2D_DecrementGridDensity;
+    densitySubItem.onCollisionFn = Render3D_DecrementGridDensity;
 
     MenuDrawItem densityPlusItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     densityPlusItem.textToDraw = "[+]";
     densityPlusItem.alignment = MENU_DRAW_ALIGNMENT_HORIZONTAL;
-    densityPlusItem.onCollisionFn = Render2D_IncrementGridDensity;
+    densityPlusItem.onCollisionFn = Render3D_IncrementGridDensity;
 
     MenuDrawItem resetItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     resetItem.textToDraw = "Reset cells";
-    resetItem.onCollisionFn = Render2D_ResetCells;
+    resetItem.onCollisionFn = Render3D_ResetCells;
 
     MenuDrawItem randFirstGenItem = MenuDrawItem_ShallowCopy(&commonDrawItem);
     randFirstGenItem.textToDraw = "Randomize 0st gen";
-    randFirstGenItem.onCollisionFn = Render2D_RandomizeZeroGen;
+    randFirstGenItem.onCollisionFn = Render3D_RandomizeZeroGen;
 
     MenuDrawItem items[] = {
         statusItem,     blankItem,       renderSpeedItem, ruleItem,
@@ -132,7 +137,7 @@ void Menu2D_Draw(Render *render) {
   MenuDrawItem minimizeItem = MenuDrawItem_InitWithDefaults(render);
   minimizeItem.fontSize = SUB_FONT_SIZE;
   minimizeItem.textToDraw = minimizeText;
-  minimizeItem.onCollisionFn = __ToggleMinimize2DMenu;
+  minimizeItem.onCollisionFn = __ToggleMinimize3DMenu;
 
   MenuDrawItem minimItems[] = {minimizeItem};
 
@@ -143,8 +148,8 @@ void Menu2D_Draw(Render *render) {
   Menu_DrawText(&drawMinimizeParams);
 }
 
-static void __ToggleMinimize2DMenu(Render *render) {
+static void __ToggleMinimize3DMenu(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-    render->render2d->menu2d.isVisible = !render->render2d->menu2d.isVisible;
+    render->render3d->menu3d.isVisible = !render->render3d->menu3d.isVisible;
   }
 }

@@ -7,6 +7,8 @@
 
 // bool DEBUG_MODE = false;
 
+const float SCRREN_DIV_RATIO = 3.5F;
+
 // thread related defaults
 const LPSECURITY_ATTRIBUTES THREAD_DEFAULT_SEC_ATTRIBUTES = NULL;
 const size_t THREAD_DEFAULT_STACK_SIZE = 0;
@@ -38,7 +40,8 @@ void InitializeConstants() {
   SYSTEM_INFO sysInfo;
   GetSystemInfo(&sysInfo);
 
-  numOfProcessors = sysInfo.dwNumberOfProcessors;
+  // numOfProcessors = sysInfo.dwNumberOfProcessors;
+  numOfProcessors = 1;
 
   chunkSizePerThread = CUBE_COUNT / numOfProcessors;
 

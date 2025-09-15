@@ -23,5 +23,5 @@ uniform Light light;
 
 void main()
 {
-    FragColor = vec4(ambient);
+    FragColor = vec4(1.0, 0.0, 0.0, 1.0);//vec4(ambient);
 }

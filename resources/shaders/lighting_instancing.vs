@@ -16,10 +16,10 @@ out vec3 fragNormal;
 
 void main()
 {
-    fragPosition = vec3(instanceTransform*vec4(vertexPosition, 1.0));
-    fragTexCoord = vertexTexCoord;
-    fragColor = vec4(1.0);
-    fragNormal = normalize(vec3(instanceTransform * vec4(vertexNormal, 0.0)));
+    // fragPosition = vec3(instanceTransform*vec4(vertexPosition, 1.0));
+    // fragTexCoord = vertexTexCoord;
+    // fragColor = vec4(1.0);
+    // fragNormal = normalize(vec3(instanceTransform * vec4(vertexNormal, 0.0)));
 
     gl_Position = mvp*instanceTransform*vec4(vertexPosition, 1.0);
 }

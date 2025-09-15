@@ -13,17 +13,21 @@ typedef enum Cells2DParams {
   CELL_COUNT = CELL_HEIGHT_SIZE * CELL_WIDTH_SIZE,
   CELL_INITIAL_GRID_DENSITY = 4, // number of cells cells are alive at start,
                                  // when the grid is randomized, lower is higher
-  CELL_NEIGHBOUR_SIZE = 4        // Moore neighbourhood
+  CELL_MIN_GRID_DENSITY = 1,
+  CELL_MAX_GRID_DENSITY = 20,
+  CELL_NEIGHBOUR_SIZE = 4 // Moore neighbourhood
 } Cells2DParams;
 
 typedef enum Cells3DParams {
   // using power of 2 would be recommended
-  MAX_CUBES_X = 16,
-  MAX_CUBES_Y = 16,
-  MAX_CUBES_Z = 16,
+  MAX_CUBES_X = 32,
+  MAX_CUBES_Y = 32,
+  MAX_CUBES_Z = 32,
   CUBE_COUNT = MAX_CUBES_X * MAX_CUBES_Y * MAX_CUBES_Z,
   CUBE_INITIAL_GRID_DENSITY = 4,
-  // the 3D Moore neighbourhood consits of the 26 neighbouring cubes
+  CUBE_MIN_GRID_DENSITY = 1,
+  CUBE_MAX_GRID_DENSITY = 20,
+  // the 3D Moore neighbourhood consists of 26 neighbouring cubes
   CUBE_NEIGHBOUR_SIZE = 26,
 } Cells3DParams;
 

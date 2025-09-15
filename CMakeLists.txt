@@ -17,7 +17,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Debug build should NOT optimize and should include debug symbols
 # Would add -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls as well, but tricky using on Windows with msys2/MINGW, so gdb has to be used instead
-set(CMAKE_C_FLAGS_DEBUG "-O0 -DDEBUG -g -gcodeview -gdwarf-4 -Wno-declaration-after-statement")
+set(CMAKE_C_FLAGS_DEBUG "-O0 -g -gcodeview -gdwarf-4 -Wno-declaration-after-statement")
 
 # Release build should optimize and NOT include debug symbols, disable asserts
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
@@ -43,7 +43,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Weverything -Wno-missing-prototypes -Wno-st
 if (CLANG_DUMP_AST)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xclang -ast-dump -Xclang -ast-dump-filter=${EXECUTABLE_NAME} -o ${CMAKE_BINARY_DIR}/${EXECUTABLE_NAME}.ast")
     message(STATUS "AST dump will be generated at ${CMAKE_BINARY_DIR}/${EXECUTABLE_NAME}.ast")
-else()
 endif()
 
 # Conditionally set flags based on what is passed to CMake
@@ -66,6 +65,13 @@ add_compile_options(
     $<$<COMPILE_LANGUAGE:C>:-Wno-documentation>
     $<$<COMPILE_LANGUAGE:C>:-Wno-documentation-unknown-command>
 )
+
+# Fuse is needed to produce a .pdb file for debugging
+if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+    add_link_options(-fuse-ld=lld -g -Wl,--pdb=)
+else()
+    add_link_options(-fuse-ld=lld)
+endif()
 
 project(${EXECUTABLE_NAME} LANGUAGES C)
 

@@ -10,12 +10,12 @@
 int rule1DBits = 0x00000000;
 
 void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive,
-                              int gridDensity) {
+                              int randGridDensity) {
   int i = 0;
   for (int posX = 0; posX < SCREEN_WIDTH; posX += CELL_WIDTH_RATIO) {
     for (int posY = 0; posY < SCREEN_HEIGHT; posY += CELL_HEIGHT_RATIO) {
       if (randomizeAlive) {
-        bool is_alive = rand() % gridDensity == 0;
+        bool is_alive = rand() % randGridDensity == 0;
         c2d->is_alive[i] = is_alive;
       } else {
         c2d->is_alive[i] = 0;
@@ -33,13 +33,14 @@ void Evolve2D_InitializeCells(Cells2D *c2d, bool randomizeAlive,
   c2d->aliveCells = 0;
 }
 
-void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive) {
+void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive,
+                              int randGridDensity) {
   int i = 0;
   for (int x = 0; x < MAX_CUBES_X; x = x + CUBE_SIZE) {
     for (int y = 0; y < MAX_CUBES_Y; y = y + CUBE_SIZE) {
       for (int z = 0; z < MAX_CUBES_Z; z = z + CUBE_SIZE) {
         if (randomizeAlive) {
-          bool is_alive = rand() % CUBE_INITIAL_GRID_DENSITY == 0;
+          bool is_alive = rand() % randGridDensity == 0;
           c3d->is_alive[i] = is_alive;
         } else {
           c3d->is_alive[i] = 0;

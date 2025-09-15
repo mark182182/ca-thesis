@@ -25,6 +25,10 @@ enum {
   SUB_FONT_SIZE = 24
 };
 
+// NOTE: ideally this should be dynamically set based on the screen size in
+// order to accommodate smaller/larger displays
+extern const float SCRREN_DIV_RATIO;
+
 // thread related defaults
 extern const LPSECURITY_ATTRIBUTES THREAD_DEFAULT_SEC_ATTRIBUTES;
 extern const size_t THREAD_DEFAULT_STACK_SIZE;
