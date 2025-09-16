@@ -65,7 +65,7 @@ void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive,
  * live cell, as if by reproduction."
  *
  */
-void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d);
+void EvolveGOL2D_NextGeneration(const Cells2D *inC2d, Cells2D *outC2d);
 static int __GOL2DCheckNeighbours(Cells2D *inC2d, int i);
 
 /**
@@ -105,7 +105,7 @@ HANDLE *EvolveGOL3D_CreateNextGenThreads(Evolve3DThreadCells *allThreadCells);
  * dead cell becomes alive if it has 5 neighbours.
  */
 void EvolveGOL3D_NextGeneration(Evolve3DThreadCells *allThreadCells,
-                                Cells3D *outC3d, Cells3D *inC3d);
+                                Cells3D *inC3d, Cells3D *outC3d);
 
 static void __GOL3D_NextGenerationMultiThread(Evolve3DThreadCells *threadCells);
 static int __GOL3DCheckNeighbours(Cells3D *inC3d, int i);
@@ -113,6 +113,6 @@ static int __GOL3DCheckNeighbours(Cells3D *inC3d, int i);
 /**
  * TODO: Do this after 3D
  */
-void EvolveCA1D_NextGeneration(Cells2D *outC2d, Cells2D *inC2d);
+void EvolveCA1D_NextGeneration(Cells2D *inC2d, Cells2D *outC2d);
 
 #endif

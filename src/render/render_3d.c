@@ -184,15 +184,14 @@ void Render3D_RenderMode(Render *render) {
       render->deltaTime >= render->render3d->render3dSpeed) {
 
     TracyCZoneN(ctx, "EvolveGOL3D_NextGeneration", true);
-    if (render->render3d->currentGeneration != 0 &&
-        render->render3d->currentGeneration % 2 == 0) {
-      EvolveGOL3D_NextGeneration(render->render3d->allThreadCells,
-                                 &render->render3d->firstC3d,
-                                 &render->render3d->secondC3d);
-    } else {
+    if (render->render3d->currentGeneration % 2 == 0) {
       EvolveGOL3D_NextGeneration(render->render3d->allThreadCells,
                                  &render->render3d->secondC3d,
                                  &render->render3d->firstC3d);
+    } else {
+      EvolveGOL3D_NextGeneration(render->render3d->allThreadCells,
+                                 &render->render3d->firstC3d,
+                                 &render->render3d->secondC3d);
     }
     TracyCZoneEnd(ctx);
     render->render3d->currentGeneration++;
@@ -310,10 +309,9 @@ void Render3D_RenderMode(Render *render) {
 
       // raycast to the nearest cube
       RayCollision cursorCubeCollision = GetRayCollisionBox(
-          cursorRay,
-          (BoundingBox){
-              (Vector3){x - CUBE_SIZE, y - CUBE_SIZE, z - CUBE_SIZE},
-              (Vector3){x + CUBE_SIZE, y + CUBE_SIZE, z + CUBE_SIZE}});
+          cursorRay, (BoundingBox){(Vector3){x * CUBE_SCALE, y * CUBE_SCALE,
+                                             z * CUBE_SCALE},
+                                   (Vector3){x, y, z}});
 
       if (cursorCubeCollision.hit) {
         // TODO: we need to account for the user pressing the edit button (or
@@ -321,7 +319,7 @@ void Render3D_RenderMode(Render *render) {
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
           actualCd->is_alive[i] = !actualCd->is_alive[i];
         }
-        collPoint = (Vector3){x, y, z};
+        collPoint = (Vector3){x * CUBE_SCALE, y * CUBE_SCALE, z * CUBE_SCALE};
         isMouseOnCube = true;
         // printf("Collision with: x=%d, y=%d, z=%d\n", x, y, z);
       }
@@ -362,7 +360,7 @@ void Render3D_RenderMode(Render *render) {
 
   Render_LogGlError();
 
-  DrawGrid(100, 1.0f);
+  // DrawGrid(100, 1.0f);
 
   EndMode3D();
 
@@ -432,6 +430,8 @@ void Render3D_ResetCells(Render *render) {
 void Render3D_RandomizeZeroGen(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
     Evolve3D_InitializeCells(&render->render3d->firstC3d, true,
+                             render->render3d->randGridDensity);
+    Evolve3D_InitializeCells(&render->render3d->secondC3d, false,
                              render->render3d->randGridDensity);
     render->render3d->currentGeneration = 0;
   }

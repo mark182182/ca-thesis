@@ -55,8 +55,7 @@ void Render2D_RenderMode(Render *render) {
 
   if (render->isPaused == false &&
       render->deltaTime >= render2d->render2dSpeed) {
-    if (render2d->currentGeneration != 0 &&
-        render2d->currentGeneration % 2 == 0) {
+    if (render2d->currentGeneration % 2 == 0) {
       EvolveGOL2D_NextGeneration(&render2d->firstC2d, &render2d->secondC2d);
     } else {
       EvolveGOL2D_NextGeneration(&render2d->secondC2d, &render2d->firstC2d);
@@ -165,6 +164,8 @@ void Render2D_ResetCells(Render *render) {
 void Render2D_RandomizeZeroGen(Render *render) {
   if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
     Evolve2D_InitializeCells(&render->render2d->firstC2d, true,
+                             render->render2d->randGridDensity);
+    Evolve2D_InitializeCells(&render->render2d->secondC2d, false,
                              render->render2d->randGridDensity);
     render->render2d->currentGeneration = 0;
   }

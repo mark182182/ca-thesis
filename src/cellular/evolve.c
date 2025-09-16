@@ -59,7 +59,7 @@ void Evolve3D_InitializeCells(Cells3D *c3d, bool randomizeAlive,
 // TODO: use a compute shader instead, if needed (since OpenGL 4.3)
 // possibly binding the 2 SSBOs and call glDispatchCompute and glMemoryBarrier
 // or paralellize on the CPU side
-void EvolveGOL2D_NextGeneration(Cells2D *outC2d, const Cells2D *inC2d) {
+void EvolveGOL2D_NextGeneration(const Cells2D *inC2d, Cells2D *outC2d) {
   for (int i = 0; i < CELL_COUNT; i++) {
     int neighbours = __GOL2DCheckNeighbours(inC2d, i);
     bool isAlive = inC2d->is_alive[i];
@@ -176,7 +176,7 @@ HANDLE *EvolveGOL3D_CreateNextGenThreads(Evolve3DThreadCells *allThreadCells) {
 // R(5766)) NOTE: Since C11 it would be possible to use threads.h, but it
 // would add more overhead etc., so the Windows API version is used instead
 void EvolveGOL3D_NextGeneration(Evolve3DThreadCells *allThreadCells,
-                                Cells3D *outC3d, Cells3D *inC3d) {
+                                Cells3D *inC3d, Cells3D *outC3d) {
   for (int i = 0; i < numOfProcessors; i++) {
     allThreadCells[i].inC3d = inC3d;
     allThreadCells[i].outC3d = outC3d;
